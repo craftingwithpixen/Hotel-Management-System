@@ -1,0 +1,574 @@
+
+=== TABLE 1 ===
+Layer | Technology | Purpose
+Runtime | Node.js 20 LTS | Backend JavaScript runtime
+Framework | Express 4 | REST API server and middleware chain
+Database | MongoDB Atlas (M10+) | Primary datastore via Mongoose ODM
+Frontend | React 18 + Vite | SPA with code-splitting and HMR
+Styling | Tailwind CSS v3 | Utility-first CSS, strictly no inline styles
+State | Zustand + React Query | Global auth/UI state + server cache
+Real-time | Socket.io 4 | Bidirectional WebSocket events
+Auth | JWT (access + refresh) | Stateless auth with httpOnly refresh cookie
+Payments | Razorpay | Orders, capture, refunds, webhooks
+Images | Cloudinary | Signed uploads, CDN delivery, transforms
+Email | Resend + React Email | OTP, booking confirmations, invoices
+PDF | pdfkit | Invoice generation, KOT printing
+QR Code | qrcode npm | Table ordering QR generation
+i18n | i18next + react-i18next | English / Marathi language toggle
+Cron | node-cron | Scheduled low-stock alerts
+
+=== TABLE 2 ===
+Role | Auth Path | Scope
+Admin | Staff login (role=admin) | Unrestricted. All features, reports, staff management, salary
+Manager | Staff login (role=manager) | Hotel config, rooms, tables, inventory, menu. No staff/salary
+Receptionist | Staff login (role=receptionist) | Room & table bookings, billing, check-in/check-out, payments
+Waiter | Staff login (role=waiter) | Table orders, KOT, modify orders, order history
+Chef | Staff login (role=chef) | Kitchen order board, status updates, menu/recipe view
+Customer | Customer login (OTP signup) | Browse, book, pay, track orders, loyalty, feedback
+
+=== TABLE 3 ===
+Feature | Admin | Manager | Receptionist | Waiter | Chef | Customer
+Hotel details edit | ✓ | ✓ | — | — | — | —
+Room CRUD | ✓ | ✓ | ✓ | — | — | —
+Table CRUD | ✓ | ✓ | — | — | — | —
+Table add/edit | ✓ | ✓ | — | — | — | —
+Room bookings | ✓ | — | ✓ | — | — | ✓
+Table bookings | ✓ | — | ✓ | — | — | ✓
+Billing & invoices | ✓ | — | ✓ | — | — | —
+Take/modify orders | ✓ | — | — | ✓ | — | —
+Kitchen dashboard | ✓ | — | — | — | ✓ | —
+Menu management | ✓ | ✓ | — | — | ✓ | —
+Inventory management | ✓ | ✓ | — | — | — | —
+Staff management | ✓ | — | — | — | — | —
+Salary management | ✓ | — | — | — | — | —
+Analytics & reports | ✓ | — | — | — | — | —
+Customer profile | — | — | — | — | — | ✓
+Track food status | — | — | — | — | — | ✓
+Loyalty points | — | — | — | — | — | ✓
+
+=== TABLE 4 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | MongoDB auto-generated
+name | String | Yes | Full name
+email | String | Yes | Unique, lowercase, trimmed
+password | String | Yes | bcrypt hashed (10 rounds)
+role | String enum | Yes | admin | manager | receptionist | waiter | chef | customer
+phone | String | No | Contact number
+avatar | String | No | Cloudinary URL
+isVerified | Boolean | Yes | True after OTP verification. Default: false
+otp | String | No | Hashed OTP for email verification
+otpExpiry | Date | No | OTP expires 10 minutes after generation
+refreshToken | String | No | Hashed refresh token stored in DB for invalidation
+loyaltyPoints | Number | Yes | Accumulated loyalty points. Default: 0
+preferredLang | String | No | en | mr. Default: en
+isDeleted | Boolean | Yes | Soft delete flag. Default: false
+
+=== TABLE 5 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+name | String | Yes | Hotel/property name
+address | Object | Yes | { street, city, state, pincode }
+phone | String | Yes | Primary contact number
+email | String | Yes | Contact email
+photos | [String] | No | Array of Cloudinary URLs
+amenities | [String] | No | e.g. ["WiFi", "AC", "Parking", "Pool"]
+checkInTime | String | Yes | e.g. "12:00"
+checkOutTime | String | Yes | e.g. "11:00"
+gstNumber | String | Yes | GST registration for billing
+gstRate | Number | Yes | e.g. 18 (for 18%). Default: 18
+isOpen | Boolean | Yes | Hotel open/closed toggle
+description | String | No | Hotel description for customer view
+socialLinks | Object | No | { instagram, facebook, website }
+
+=== TABLE 6 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | Parent hotel reference
+roomNumber | String | Yes | e.g. "101", "Deluxe-5". Unique per hotel
+type | String enum | Yes | single | double | deluxe | suite
+pricePerNight | Number | Yes | Base price in INR
+status | String enum | Yes | available | booked | maintenance
+cleaningStatus | String enum | Yes | clean | dirty | in_progress
+floor | Number | No | Floor number for grouping
+capacity | Number | Yes | Max occupancy
+amenities | [String] | No | Room-specific amenities
+images | [String] | No | Cloudinary URLs
+isDeleted | Boolean | Yes | Soft delete. Default: false
+
+=== TABLE 7 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | Parent hotel
+tableNumber | String | Yes | e.g. "T01". Unique per hotel
+capacity | Number | Yes | 2 | 4 | 6 | 8
+status | String enum | Yes | available | reserved | occupied
+location | String | No | e.g. "Indoor", "Rooftop", "Garden"
+qrCode | String | No | Cloudinary URL of generated QR PNG
+qrUrl | String | No | The URL encoded in the QR: /scan/table/:id
+isActive | Boolean | Yes | Toggle table availability. Default: true
+
+=== TABLE 8 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+type | String enum | Yes | room | table
+customer | ObjectId ref User | Yes | Who made the booking
+createdBy | ObjectId ref User | No | Staff who created (walk-in). Null for customer self-booking
+room | ObjectId ref Room | No | Required if type=room
+table | ObjectId ref Table | No | Required if type=table
+checkIn | Date | No | Room booking check-in date
+checkOut | Date | No | Room booking check-out date
+bookingDate | Date | No | Table booking date
+timeSlot | String | No | e.g. "19:00" for table bookings
+guestCount | Number | Yes | Number of guests
+status | String enum | Yes | pending | confirmed | checked_in | checked_out | cancelled
+isWalkIn | Boolean | Yes | Walk-in flag. Default: false
+specialRequests | String | No | Guest notes
+payment | ObjectId ref Payment | No | Linked payment record
+billing | ObjectId ref Billing | No | Final bill
+cancellationReason | String | No | Reason on cancellation
+cancelledAt | Date | No | Timestamp of cancellation
+
+=== TABLE 9 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | 
+name | String | Yes | Item name
+nameMarathi | String | No | Marathi translation
+category | String enum | Yes | veg | non_veg | drinks | dessert | combo
+price | Number | Yes | Price in INR
+image | String | No | Cloudinary URL (w_400 transform)
+description | String | No | Short description
+isAvailable | Boolean | Yes | Toggle item availability. Default: true
+prepTime | Number | No | Estimated prep time in minutes
+comboItems | [ObjectId ref MenuItem] | No | For combo offers, child items
+allergens | [String] | No | e.g. ["nuts", "dairy"]
+isDeleted | Boolean | Yes | Soft delete. Default: false
+
+=== TABLE 10 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | 
+table | ObjectId ref Table | Yes | Which table this order is for
+booking | ObjectId ref Booking | No | Linked table booking if pre-booked
+waiter | ObjectId ref User | Yes | Staff who took the order
+items | [Object] | Yes | Array of order line items (see below)
+items[].menuItem | ObjectId ref MenuItem | Yes | 
+items[].quantity | Number | Yes | 
+items[].notes | String | No | Special instructions for this item
+items[].status | String enum | Yes | pending | preparing | ready | served
+items[].price | Number | Yes | Snapshot price at time of order
+overallStatus | String enum | Yes | pending | preparing | ready | served | billed
+kotPrinted | Boolean | Yes | KOT has been printed/sent to kitchen. Default: false
+kotPrintedAt | Date | No | Timestamp of KOT
+billing | ObjectId ref Billing | No | Set when bill is generated
+isQROrder | Boolean | Yes | Placed by customer via QR scan. Default: false
+customer | ObjectId ref User | No | If QR order and customer is logged in
+
+=== TABLE 11 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | 
+type | String enum | Yes | room | restaurant
+order | ObjectId ref Order | No | For restaurant bills
+booking | ObjectId ref Booking | No | For room bills
+customer | ObjectId ref User | Yes | 
+items | [Object] | Yes | Snapshot of billable items with prices
+subtotal | Number | Yes | Pre-tax, pre-discount total
+gstRate | Number | Yes | Rate applied (e.g. 18)
+gstAmount | Number | Yes | Computed GST
+discount | Number | Yes | INR discount amount. Default: 0
+coupon | ObjectId ref Coupon | No | Applied coupon
+loyaltyPointsUsed | Number | Yes | Points redeemed. Default: 0
+total | Number | Yes | Final payable amount
+splitBetween | Number | Yes | Number of ways to split. Default: 1
+amountPerPerson | Number | No | total / splitBetween
+status | String enum | Yes | draft | finalized | paid
+payment | ObjectId ref Payment | No | Linked payment
+invoiceUrl | String | No | Cloudinary URL of PDF invoice
+paidAt | Date | No | 
+generatedBy | ObjectId ref User | Yes | Staff who generated the bill
+
+=== TABLE 12 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+billing | ObjectId ref Billing | Yes | 
+method | String enum | Yes | cash | upi | card | net_banking | loyalty
+razorpayOrderId | String | No | Set for online payments
+razorpayPaymentId | String | No | Set after capture
+razorpaySignature | String | No | Stored for audit trail
+amount | Number | Yes | Amount in paise (Razorpay) or INR (cash)
+currency | String | Yes | Default: INR
+status | String enum | Yes | pending | captured | failed | refunded
+refundId | String | No | Razorpay refund ID if refunded
+refundedAt | Date | No | 
+webhookVerified | Boolean | Yes | True if webhook confirmed payment. Default: false
+
+=== TABLE 13 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+user | ObjectId ref User | Yes | One-to-one with User document
+hotel | ObjectId ref Hotel | Yes | 
+employeeId | String | Yes | Unique staff ID (e.g. "EMP-001")
+department | String | Yes | Kitchen | Front Desk | Restaurant | Management
+salary | Number | Yes | Monthly salary in INR
+joiningDate | Date | Yes | 
+isActive | Boolean | Yes | Default: true
+emergencyContact | Object | No | { name, phone, relation }
+documents | [String] | No | Cloudinary URLs (ID proofs etc.)
+
+=== TABLE 14 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+staff | ObjectId ref Staff | Yes | 
+hotel | ObjectId ref Hotel | Yes | 
+date | Date | Yes | Attendance date (date only, no time)
+present | Boolean | Yes | 
+checkInTime | String | No | e.g. "09:05"
+checkOutTime | String | No | e.g. "18:30"
+notes | String | No | Leave reason etc.
+
+=== TABLE 15 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | 
+name | String | Yes | Raw material or supply name
+unit | String | Yes | kg | litre | pcs | box | packet
+currentStock | Number | Yes | Current quantity
+lowStockThreshold | Number | Yes | Alert when currentStock ≤ this value
+category | String | No | e.g. "Vegetables", "Dairy", "Beverages"
+supplier | ObjectId ref Supplier | No | Default supplier
+purchaseHistory | [Object] | No | [{ qty, costPerUnit, total, date, supplier }]
+dailyConsumption | [Object] | No | [{ date, quantity }] — logged daily
+lastRestockedAt | Date | No | 
+
+=== TABLE 16 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | 
+name | String | Yes | Supplier / vendor name
+contactPerson | String | No | 
+phone | String | Yes | 
+email | String | No | 
+address | String | No | 
+items | [ObjectId ref InventoryItem] | No | Items usually supplied by this vendor
+isActive | Boolean | Yes | Default: true
+
+=== TABLE 17 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | 
+code | String | Yes | Unique coupon code (uppercase)
+type | String enum | Yes | flat | percent
+value | Number | Yes | INR discount or percent off
+minOrderValue | Number | No | Minimum bill to apply coupon
+maxDiscount | Number | No | Cap for percent-type coupons
+usageLimit | Number | No | Max total uses across all customers
+usedCount | Number | Yes | Default: 0
+perUserLimit | Number | No | Max uses per customer
+validFrom | Date | Yes | 
+validTill | Date | Yes | 
+isActive | Boolean | Yes | Default: true
+applicableTo | String enum | Yes | all | room | restaurant
+
+=== TABLE 18 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+customer | ObjectId ref User | Yes | 
+type | String enum | Yes | earn | redeem
+points | Number | Yes | Positive for earn, positive stored (logic handles deduction)
+description | String | Yes | e.g. "Earned on booking #BK-123"
+billing | ObjectId ref Billing | No | Source billing record
+balanceAfter | Number | Yes | Customer balance after this transaction
+
+=== TABLE 19 ===
+Field | Type | Required | Description
+_id | ObjectId | auto | 
+hotel | ObjectId ref Hotel | Yes | 
+customer | ObjectId ref User | Yes | 
+booking | ObjectId ref Booking | No | 
+rating | Number | Yes | 1–5
+comment | String | No | 
+category | String enum | Yes | room | food | service | overall
+isPublished | Boolean | Yes | Admin approval. Default: false
+
+=== TABLE 20 ===
+Method | Endpoint | Access | Description
+POST | /auth/register | Public | Register customer — sends OTP to email via Resend
+POST | /auth/verify-otp | Public | Verify OTP — returns access + refresh tokens
+POST | /auth/resend-otp | Public | Resend OTP (rate-limited: 1/minute)
+POST | /auth/login | Public | Customer password login (after verification)
+POST | /auth/staff-login | Public | Staff login by email + password
+POST | /auth/refresh | Public | Issue new access token using httpOnly refresh cookie
+POST | /auth/logout | Auth | Invalidate refresh token in DB
+POST | /auth/forgot-password | Public | Send password reset OTP
+POST | /auth/reset-password | Public | Reset password with OTP
+GET | /auth/me | Auth | Get current user profile
+PUT | /auth/me | Auth | Update own profile (name, phone, avatar, preferredLang)
+
+=== TABLE 21 ===
+Method | Endpoint | Access | Description
+GET | /hotel | Public | Get hotel details (for customer browse)
+PUT | /hotel | Manager+ | Update hotel info, amenities, photos, timings
+POST | /hotel/photos | Manager+ | Upload photos to Cloudinary (multipart/form-data)
+DELETE | /hotel/photos/:index | Manager+ | Remove a photo by array index
+PUT | /hotel/availability | Manager+ | Toggle hotel open/closed status
+
+=== TABLE 22 ===
+Method | Endpoint | Access | Description
+GET | /rooms | Public | List all rooms. Query: ?checkIn=&checkOut=&type= for availability filter
+GET | /rooms/:id | Public | Single room detail with images
+POST | /rooms | Receptionist+ | Create a room (with image upload)
+PUT | /rooms/:id | Receptionist+ | Update room details, pricing, amenities
+DELETE | /rooms/:id | Manager+ | Soft delete a room
+PUT | /rooms/:id/status | Receptionist+ | Change availability/maintenance status
+PUT | /rooms/:id/cleaning | Receptionist+ | Update cleaning status
+GET | /rooms/:id/bookings | Receptionist+ | Booking history for a specific room
+
+=== TABLE 23 ===
+Method | Endpoint | Access | Description
+GET | /tables | Auth | List all tables with current status
+GET | /tables/:id | Auth | Single table with QR code
+POST | /tables | Manager+ | Create table — auto-generates QR code via qrService
+PUT | /tables/:id | Manager+ | Update table capacity, location
+DELETE | /tables/:id | Manager+ | Soft delete a table
+PUT | /tables/:id/status | Receptionist+ | Change status: available | reserved | occupied
+POST | /tables/:id/qr | Manager+ | Regenerate QR code for table
+GET | /tables/:id/qr/download | Manager+ | Download QR PNG from Cloudinary
+
+=== TABLE 24 ===
+Method | Endpoint | Access | Description
+POST | /bookings/room | Customer | Receptionist | Create room booking. Validates date overlap, locks room
+POST | /bookings/table | Customer | Receptionist | Create table booking for a date/time slot
+GET | /bookings/my | Customer | Customer's own booking history
+GET | /bookings | Receptionist+ | All bookings. Query: ?type=&status=&date=
+GET | /bookings/:id | Receptionist+ | Single booking detail
+PUT | /bookings/:id/confirm | Receptionist+ | Confirm a pending booking
+PUT | /bookings/:id/checkin | Receptionist+ | Check in — sets room status to occupied
+PUT | /bookings/:id/checkout | Receptionist+ | Check out — triggers bill generation, frees room
+PUT | /bookings/:id/cancel | Customer | Receptionist | Cancel booking — triggers refund if paid
+GET | /bookings/available-rooms | Public | Query: ?checkIn=&checkOut=&type= returns available rooms
+GET | /bookings/available-tables | Public | Query: ?date=&time=&capacity= returns available tables
+
+=== TABLE 25 ===
+Method | Endpoint | Access | Description
+GET | /menu | Public | Full menu list. Query: ?category=&available=true
+GET | /menu/:id | Public | Single menu item detail
+POST | /menu | Chef | Manager+ | Add menu item with image upload
+PUT | /menu/:id | Chef | Manager+ | Update item details, price, availability
+DELETE | /menu/:id | Manager+ | Soft delete menu item
+PUT | /menu/:id/toggle | Chef | Manager+ | Toggle isAvailable on/off
+GET | /menu/categories | Public | List distinct categories with item counts
+POST | /menu/combo | Manager+ | Create combo offer from existing items
+
+=== TABLE 26 ===
+Method | Endpoint | Access | Description
+POST | /orders | Waiter | Customer (QR) | Create new order for a table — emits new:order to kitchen socket room
+GET | /orders | Waiter+ | All orders. Query: ?tableId=&status=&date=
+GET | /orders/kitchen | Chef | Admin | Orders in non-served states, sorted by createdAt asc
+GET | /orders/:id | Waiter+ | Single order with all item details
+GET | /orders/table/:tableId | Waiter+ | Active orders for a table
+PUT | /orders/:id/items | Waiter | Add/modify items (before KOT is printed)
+PUT | /orders/:id/status | Chef | Update overallStatus — emits order:update socket event
+PUT | /orders/:id/item-status | Chef | Update status of individual order item
+POST | /orders/:id/kot | Waiter | Mark KOT as printed, lock order from further modification
+GET | /orders/:id/track | Customer | Customer-facing order status (status + item statuses)
+
+=== TABLE 27 ===
+Method | Endpoint | Access | Description
+POST | /billing/generate | Receptionist+ | Generate bill from order or booking — applies GST, discount
+GET | /billing/:id | Auth | Get bill detail
+GET | /billing/:id/pdf | Auth | Redirect to Cloudinary PDF invoice URL
+POST | /billing/:id/discount | Receptionist+ | Apply flat discount amount to draft bill
+POST | /billing/:id/coupon | Receptionist | Customer | Apply coupon code — validates and computes discount
+POST | /billing/:id/loyalty | Receptionist | Customer | Redeem loyalty points against bill
+POST | /billing/:id/split | Receptionist | Set splitBetween value, compute amountPerPerson
+GET | /billing/my | Customer | Customer billing history
+GET | /billing | Receptionist+ | All bills. Query: ?date=&status=
+
+=== TABLE 28 ===
+Method | Endpoint | Access | Description
+POST | /payments/create-order | Auth | Create Razorpay order — returns razorpay_order_id and amount
+POST | /payments/verify | Auth | Verify HMAC-SHA256 signature, capture payment, update Billing + Booking/Order
+POST | /payments/webhook | Public (signature verified) | Razorpay async webhook — handles payment.captured, payment.failed
+POST | /payments/cash | Receptionist | Record a cash payment directly (no Razorpay)
+POST | /payments/refund | Receptionist+ | Initiate Razorpay refund on cancellation
+GET | /payments/:id | Receptionist+ | Single payment record
+
+=== TABLE 29 ===
+Method | Endpoint | Access | Description
+GET | /staff | Admin | All staff list with user details
+GET | /staff/:id | Admin | Single staff detail
+POST | /staff | Admin | Create staff member — creates User + Staff documents in a transaction
+PUT | /staff/:id | Admin | Update role, salary, department
+DELETE | /staff/:id | Admin | Soft delete (sets user.isDeleted = true)
+GET | /staff/:id/attendance | Admin | Attendance records. Query: ?month=&year=
+POST | /staff/:id/attendance | Admin | Mark attendance for a date
+PUT | /staff/:id/attendance/:date | Admin | Update attendance record
+GET | /staff/:id/salary-slip | Admin | Generate monthly salary report PDF
+GET | /staff/attendance/calendar | Admin | Full calendar view: all staff, all dates for a month
+
+=== TABLE 30 ===
+Method | Endpoint | Access | Description
+GET | /inventory | Manager+ | All items with stock levels. Query: ?lowStock=true
+GET | /inventory/:id | Manager+ | Single item with purchase history and consumption
+POST | /inventory | Manager+ | Add new inventory item
+PUT | /inventory/:id | Manager+ | Update item details and threshold
+DELETE | /inventory/:id | Manager+ | Soft delete item
+POST | /inventory/:id/restock | Manager+ | Add stock — appends to purchaseHistory
+POST | /inventory/:id/consume | Manager+ | Chef | Log daily consumption
+GET | /inventory/alerts | Manager+ | Items at or below low stock threshold
+GET | /suppliers | Manager+ | All suppliers
+POST | /suppliers | Manager+ | Add supplier
+PUT | /suppliers/:id | Manager+ | Update supplier
+DELETE | /suppliers/:id | Manager+ | Soft delete supplier
+
+=== TABLE 31 ===
+Method | Endpoint | Access | Description
+GET | /reports/daily | Admin | Daily revenue, covers, room nights. Query: ?date=
+GET | /reports/monthly | Admin | Monthly revenue chart data. Query: ?month=&year=
+GET | /reports/occupancy | Admin | Room occupancy % by type and date range
+GET | /reports/table-usage | Admin | Table turnover and peak hour analysis
+GET | /reports/inventory | Admin | Inventory consumption vs purchase summary
+GET | /reports/staff-performance | Admin | Orders per waiter, attendance rate per staff
+GET | /reports/top-menu-items | Admin | Most ordered items in date range
+
+=== TABLE 32 ===
+Method | Endpoint | Access | Description
+GET | /customer/profile | Customer | Profile + loyalty points balance
+PUT | /customer/profile | Customer | Update name, phone, avatar, preferred language
+GET | /customer/bookings | Customer | All room and table bookings
+GET | /customer/orders | Customer | QR order history
+GET | /customer/bills | Customer | Bill and payment history
+GET | /customer/loyalty | Customer | Loyalty point transactions
+POST | /customer/feedback | Customer | Submit feedback with rating
+POST | /customer/complaints | Customer | Log a complaint
+GET | /customer/complaints | Customer | Own complaint list with resolution status
+GET | /scan/table/:tableId | Public | QR landing — returns table info + public menu
+
+=== TABLE 33 ===
+Room Name | Joined by | Purpose
+kitchen | All chefs on connect (role check) | Receives all new KOTs and order modifications
+admin | Admin + Manager on connect | Dashboard live stats, low-stock alerts, booking notifications
+waiter:{userId} | Each waiter joins their own room | Gets notified when their table's order is ready
+table:{tableId} | Customer on QR order page | Live order status updates for that table
+receptionist | All receptionists on connect | New booking alerts, check-in/check-out events
+
+=== TABLE 34 ===
+Event | Emitted to room | Payload | Trigger
+new:order | kitchen | { orderId, tableNumber, items[], waiterName } | POST /orders
+order:update | table:{tableId}, waiter:{waiterId} | { orderId, overallStatus, items[] } | PUT /orders/:id/status
+item:update | table:{tableId} | { orderId, itemId, status } | PUT /orders/:id/item-status
+booking:new | receptionist | { bookingId, type, customerName, checkIn } | POST /bookings/*
+booking:cancelled | receptionist, admin | { bookingId, type, reason } | PUT /bookings/:id/cancel
+inventory:alert | admin | { items: [{ name, currentStock, threshold }] } | Cron job every 6h
+payment:captured | admin | { billingId, amount, method } | POST /payments/verify or webhook
+table:status | receptionist, admin | { tableId, status } | PUT /tables/:id/status
+
+=== TABLE 35 ===
+Event | Payload | Server Action
+join:kitchen | { token } | Verify role, add socket to "kitchen" room
+join:table | { tableId } | Add socket to "table:{tableId}" room
+join:admin | { token } | Verify admin/manager role, add to "admin" room
+join:waiter | { token } | Add to "waiter:{userId}" room
+join:receptionist | { token } | Add to "receptionist" room
+
+=== TABLE 36 ===
+Step | Actor | What happens
+1 | Customer | POST /auth/register with { name, email, password }
+2 | Server | Check email not already registered. Generate 6-digit OTP. Hash OTP (bcrypt). Store in user.otp + user.otpExpiry (now + 10 min). Set isVerified=false
+3 | Resend | emailService.sendOTP(email, otp) fires React Email template with OTP
+4 | Customer | POST /auth/verify-otp with { email, otp }
+5 | Server | Compare OTP hash. Check otpExpiry not passed. Set isVerified=true, clear otp fields. Issue access token (15 min) + refresh token (7 days). Store hashed refresh in DB. Set refresh as httpOnly cookie
+6 | Client | Store access token in Zustand authStore (memory only). React Router redirects to customer dashboard
+
+=== TABLE 37 ===
+Step | Actor | What happens
+1 | Customer | GET /bookings/available-rooms?checkIn=&checkOut=&type= — server queries rooms where no confirmed booking overlaps the date range
+2 | Customer | POST /bookings/room with { roomId, checkIn, checkOut, guestCount }
+3 | Server | Re-validate room availability (race condition guard). Create Booking with status=pending. Room status stays available until payment
+4 | Customer | POST /payments/create-order with { billingId }
+5 | Server | Create Razorpay order (amount in paise). Return { razorpay_order_id, amount, currency, key }
+6 | Client | Open Razorpay checkout modal with order details. Customer pays
+7 | Customer | POST /payments/verify with { razorpay_payment_id, razorpay_order_id, razorpay_signature }
+8 | Server | HMAC-SHA256 verify. Mark Payment captured. Booking status=confirmed. Room status=booked. Add loyalty points to customer
+9 | Resend | emailService.sendBookingConfirmation with booking details and PDF invoice attached
+10 | Socket | Emit booking:new to receptionist room
+
+=== TABLE 38 ===
+Step | Actor | What happens
+1 | Waiter | Selects table on their dashboard. Adds items from menu. POST /orders with { tableId, items: [{ menuItemId, quantity, notes }] }
+2 | Server | Create Order document. Set table.status=occupied. Snapshot item prices. overallStatus=pending
+3 | Socket | socketService.emitNewOrder(io, order) → io.to("kitchen").emit("new:order", {...})
+4 | Chef | Kitchen board auto-updates — new KOT card appears in Pending column. No page refresh needed
+5 | Waiter | POST /orders/:id/kot — marks kotPrinted=true, locks items from modification
+6 | Chef | Drags order to Preparing. PUT /orders/:id/status { status: "preparing" }
+7 | Socket | io.to("table:{tableId}").emit("order:update") + io.to("waiter:{waiterId}").emit("order:update")
+8 | Customer | If they scanned QR and are on /scan/table/:id, their status chip updates live: Pending → Preparing → Ready
+9 | Chef | Marks Ready. Waiter notified. Sets Served after delivery
+10 | Receptionist | POST /billing/generate — computes subtotal + GST + any discount. POST /payments/cash or online
+
+=== TABLE 39 ===
+Step | Actor | What happens
+1 | Receptionist | POST /billing/generate with { orderId or bookingId }
+2 | Server | Snapshot all item prices + quantities. Compute subtotal. Apply hotel.gstRate. Create Billing document (status=draft)
+3 | Receptionist | Optionally POST /billing/:id/coupon, /loyalty, /discount, /split
+4 | Receptionist | POST /payments/cash or trigger online payment
+5 | Server | On payment success: Billing.status=paid. pdfService.generateInvoice() — creates PDF with pdfkit. Upload PDF to Cloudinary. Store invoiceUrl in Billing
+6 | Resend | emailService.sendInvoice(customer.email, invoiceUrl)
+7 | Customer | GET /billing/my shows bill with "Download Invoice" link
+
+=== TABLE 40 ===
+Variable | Used by | Description
+MONGODB_URI | config/db.js | MongoDB Atlas connection string
+ACCESS_TOKEN_SECRET | authenticate.js | JWT access token signing secret (min 64 chars)
+REFRESH_TOKEN_SECRET | auth controller | JWT refresh token signing secret
+ACCESS_TOKEN_EXPIRY | auth controller | e.g. "15m"
+REFRESH_TOKEN_EXPIRY | auth controller | e.g. "7d"
+RAZORPAY_KEY_ID | razorpay.js | Razorpay public key ID
+RAZORPAY_KEY_SECRET | razorpay.js | Razorpay secret key
+RAZORPAY_WEBHOOK_SECRET | payment routes | Webhook signature verification secret
+CLOUDINARY_CLOUD_NAME | cloudinary.js | Cloudinary cloud name
+CLOUDINARY_API_KEY | cloudinary.js | Cloudinary API key
+CLOUDINARY_API_SECRET | cloudinary.js | Cloudinary API secret
+RESEND_API_KEY | emailService.js | Resend API key
+RESEND_FROM_EMAIL | emailService.js | Verified sender address
+FRONTEND_URL | qrService.js, cors | e.g. https://app.yourdomain.com
+PORT | index.js | Server port. Default: 5000
+NODE_ENV | app-wide | development | production
+COOKIE_DOMAIN | auth controller | Domain for httpOnly refresh cookie
+
+=== TABLE 41 ===
+Concern | Implementation
+Token storage | Access token in Zustand memory only. Refresh token in httpOnly, Secure, SameSite=Strict cookie — never accessible to JS
+Token refresh | Axios interceptor catches 401, calls /auth/refresh silently, retries original request. User sees no disruption
+Password hashing | bcrypt with 10 salt rounds. Never stored or logged in plaintext
+OTP security | OTP hashed before storage. 10-minute expiry. Rate-limited: 1 resend per minute per email
+RBAC | Every protected route has both authenticate (JWT) and authorize([roles]) middleware. Frontend route guards are secondary
+Razorpay webhook | Uses express.raw() body parser on webhook route. HMAC-SHA256 signature verified before any DB write
+Cloudinary uploads | Client uploads with server-generated signatures. No API secret exposed to frontend
+Rate limiting | express-rate-limit: 100 req/15min general, 5 req/min on /auth/* routes
+Helmet.js | Sets security headers: CSP, X-Frame-Options, HSTS, etc.
+Input validation | express-validator on all mutation routes. Mongoose schema validation as second layer
+Soft deletes | Staff, rooms, menu items use isDeleted flag. Data is never hard-deleted
+Mongo injection | Mongoose sanitizes all queries. express-mongo-sanitize middleware as backup
+
+=== TABLE 42 ===
+Area | Approach
+Database indexes | All high-frequency query fields indexed. Compound indexes on booking date ranges and room availability queries
+React Query caching | Server state cached with stale-time of 30s for menus, 0 for orders/kitchen. Mutations invalidate relevant keys immediately
+Code splitting | React.lazy + Suspense on each role-specific page bundle. Kitchen dashboard and admin analytics load on demand only
+Image optimization | Cloudinary auto-format (f_auto) and quality (q_auto) transforms. Served via Cloudinary CDN. Lazy-loaded with IntersectionObserver
+Socket namespaces | Consider splitting into /hotel and /customer namespaces as traffic grows to reduce broadcast surface
+MongoDB aggregations | Reports use $facet aggregation pipelines — single query returns multiple report dimensions
+Pagination | All list endpoints accept ?page=&limit= (default 20). Cursor-based pagination on high-volume order/booking lists
+
+=== TABLE 43 ===
+Service | Recommended platform | Notes
+Backend (Node/Express) | Render.com or Railway | Single dyno/instance to start. Add Redis adapter for Socket.io if scaling to multiple instances
+Frontend (React/Vite) | Vercel | Static build, global CDN, automatic HTTPS
+Database | MongoDB Atlas M10 | M10 minimum for production workload. Enable Atlas backups
+File Storage | Cloudinary (Free → Pro) | Start on free tier, upgrade when storage exceeds 25GB
+Email | Resend | Verify custom domain. Start on free tier (3000 emails/month)
+Payments | Razorpay Live Mode | Complete KYC on Razorpay dashboard before going live
+Process manager | PM2 (if self-hosted) | cluster mode for multi-core. Not needed on Render/Railway
+Environment secrets | .env on Render / Vercel dashboard | Never commit .env to Git. Use .env.example as reference

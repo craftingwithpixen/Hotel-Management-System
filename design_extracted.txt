@@ -1,0 +1,451 @@
+HospitalityOS
+Full-Stack System Design & Architecture
+MERN Stack · Tailwind CSS · Razorpay · Cloudinary · Resend · Socket.io
+
+1. Project Overview
+HospitalityOS is a unified hotel and restaurant management platform built on the MERN stack. It covers every operational surface — front desk, kitchen, restaurant floor, inventory, HR, billing, and the customer-facing booking experience — in a single codebase. All features are interconnected through a shared MongoDB database and a real-time Socket.io event bus. Role-based access control gates every route, both on the server and in the React client.
+1.1 Technology Stack
+
+2. User Roles & Access Control
+2.1 Role Definitions
+
+2.2 Feature-Role Matrix
+
+2.3 Middleware Enforcement
+authenticate.js
+// middleware/authenticate.js
+const authenticate = async (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token" });
+  try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = await User.findById(decoded.id).select("-password -refreshToken");
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Token expired or invalid" });
+  }
+};
+
+authorize.js
+// middleware/authorize.js
+const authorize = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role))
+    return res.status(403).json({ message: "Access denied" });
+  next();
+};
+
+// Usage on a route:
+router.delete("/staff/:id", authenticate, authorize("admin"), staffCtrl.delete);
+
+3. Project Structure
+3.1 Backend (/ server)
+server/
+├── config/
+│   ├── db.js              # Mongoose connection (Atlas URI from .env)
+│   ├── cloudinary.js      # Cloudinary SDK init + signed upload helper
+│   └── razorpay.js        # Razorpay instance
+├── models/
+│   ├── User.js
+│   ├── Hotel.js
+│   ├── Room.js
+│   ├── Table.js
+│   ├── Booking.js
+│   ├── Order.js
+│   ├── MenuItem.js
+│   ├── Billing.js
+│   ├── Payment.js
+│   ├── Staff.js
+│   ├── Attendance.js
+│   ├── InventoryItem.js
+│   ├── Supplier.js
+│   ├── Coupon.js
+│   ├── LoyaltyTransaction.js
+│   ├── Feedback.js
+│   └── Complaint.js
+├── routes/v1/
+│   ├── auth.routes.js
+│   ├── hotel.routes.js
+│   ├── room.routes.js
+│   ├── table.routes.js
+│   ├── booking.routes.js
+│   ├── order.routes.js
+│   ├── menu.routes.js
+│   ├── billing.routes.js
+│   ├── payment.routes.js
+│   ├── staff.routes.js
+│   ├── inventory.routes.js
+│   ├── report.routes.js
+│   ├── customer.routes.js
+│   └── notification.routes.js
+├── controllers/           # One controller per route group
+├── middleware/
+│   ├── authenticate.js
+│   ├── authorize.js
+│   ├── uploadMiddleware.js # multer + cloudinary signed upload
+│   └── errorHandler.js
+├── services/
+│   ├── emailService.js    # Resend wrapper
+│   ├── pdfService.js      # pdfkit invoice generator
+│   ├── socketService.js   # emit helpers
+│   └── qrService.js       # qrcode generator
+├── sockets/
+│   └── socketHandler.js   # connection, room join, event listeners
+├── jobs/
+│   └── stockAlertJob.js   # node-cron every 6 hours
+├── utils/
+│   ├── validateRequest.js
+│   ├── razorpayVerify.js  # HMAC-SHA256 signature check
+│   └── generateOTP.js
+└── index.js               # Express + Socket.io bootstrap
+
+3.2 Frontend (/ client)
+client/src/
+├── pages/
+│   ├── auth/              # Login, Register, OTPVerify
+│   ├── admin/             # Dashboard, Staff, Reports, Settings
+│   ├── manager/           # Hotel, Rooms, Tables, Inventory, Menu
+│   ├── receptionist/      # Bookings, Billing, CheckIn
+│   ├── waiter/            # OrderPad, OrderHistory
+│   ├── chef/              # KitchenBoard
+│   └── customer/          # Browse, BookRoom, BookTable, Track, History
+├── components/
+│   ├── ui/                # Button, Input, Modal, Badge, Toast (Tailwind)
+│   ├── tables/            # DataTable, RoomGrid, TableMap
+│   ├── forms/             # BookingForm, OrderForm, StaffForm
+│   ├── charts/            # RevenueChart, OccupancyChart (Recharts)
+│   ├── ImageUpload.jsx    # Cloudinary signed upload component
+│   ├── PaymentModal.jsx   # Razorpay checkout trigger
+│   ├── QRDisplay.jsx
+│   └── AttendanceCalendar.jsx
+├── layouts/
+│   ├── AdminLayout.jsx
+│   ├── StaffLayout.jsx
+│   └── CustomerLayout.jsx
+├── store/
+│   ├── authStore.js       # Zustand: user, role, accessToken
+│   ├── orderStore.js      # Zustand: live orders
+│   ├── notifStore.js      # Zustand: toast queue
+│   └── cartStore.js       # Zustand: customer cart
+├── services/
+│   ├── api.js             # Axios instance + interceptor (auto-refresh)
+│   └── socket.js          # Socket.io client singleton
+├── hooks/
+│   ├── useAuth.js
+│   ├── useSocket.js
+│   └── useDebounce.js
+└── i18n/
+    ├── en.json
+    └── mr.json
+
+4. MongoDB Schemas
+All schemas use Mongoose. Timestamps are enabled on every model (createdAt, updatedAt). Soft deletes are implemented via an isDeleted: Boolean field where appropriate.
+4.1 User
+
+// Indexes
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ role: 1 });
+
+4.2 Hotel
+
+4.3 Room
+
+// Indexes
+RoomSchema.index({ hotel: 1, roomNumber: 1 }, { unique: true });
+RoomSchema.index({ hotel: 1, status: 1 });
+RoomSchema.index({ hotel: 1, type: 1 });
+
+4.4 Table (Restaurant)
+
+4.5 Booking
+
+// Indexes
+BookingSchema.index({ customer: 1, status: 1 });
+BookingSchema.index({ room: 1, checkIn: 1, checkOut: 1 });
+BookingSchema.index({ table: 1, bookingDate: 1 });
+BookingSchema.index({ status: 1, createdAt: -1 });
+
+4.6 MenuItem
+
+4.7 Order
+
+// Indexes
+OrderSchema.index({ table: 1, overallStatus: 1 });
+OrderSchema.index({ hotel: 1, createdAt: -1 });
+OrderSchema.index({ overallStatus: 1 });
+
+4.8 Billing
+
+4.9 Payment
+
+4.10 Staff
+
+4.11 Attendance
+
+AttendanceSchema.index({ staff: 1, date: 1 }, { unique: true });
+
+4.12 InventoryItem
+
+4.13 Supplier
+
+4.14 Coupon
+
+4.15 LoyaltyTransaction
+
+4.16 Feedback
+
+5. API Reference
+All routes are prefixed with /api/v1. Protected routes require Authorization: Bearer <token> header. Role annotations show the minimum roles with access — all higher roles also have access.
+5.1 Authentication Routes
+
+5.2 Hotel Routes
+
+5.3 Room Routes
+
+5.4 Table Routes
+
+5.5 Booking Routes
+
+5.6 Menu Routes
+
+5.7 Order Routes
+
+5.8 Billing Routes
+
+5.9 Payment Routes
+
+5.10 Staff Routes
+
+5.11 Inventory Routes
+
+5.12 Reports & Analytics Routes
+
+5.13 Customer Feature Routes
+
+6. Real-Time Layer (Socket.io)
+6.1 Socket Room Structure
+
+6.2 Server-Emitted Events
+
+6.3 Client-Emitted Events
+
+6.4 Socket Handler Structure
+// sockets/socketHandler.js
+module.exports = (io) => {
+  io.on("connection", (socket) => {
+    // Verify JWT from handshake auth
+    const token = socket.handshake.auth.token;
+    const user = verifyAccessToken(token); // throws on invalid
+
+    socket.on("join:kitchen", () => {
+      if (["chef", "admin"].includes(user.role))
+        socket.join("kitchen");
+    });
+
+    socket.on("join:table", ({ tableId }) => {
+      socket.join(`table:${tableId}`);
+    });
+
+    socket.on("disconnect", () => {
+      // Socket.io auto-removes from rooms
+    });
+  });
+};
+
+// services/socketService.js — emit helpers
+const emitNewOrder = (io, order) => {
+  io.to("kitchen").emit("new:order", {
+    orderId: order._id,
+    tableNumber: order.table.tableNumber,
+    items: order.items,
+    waiterName: order.waiter.name,
+  });
+};
+
+7. End-to-End Workflows
+7.1 Customer Registration (OTP Flow)
+
+7.2 Room Booking → Payment Flow
+
+7.3 Waiter → Kitchen → Customer Live Order Flow
+
+7.4 Billing & Invoice Flow
+
+7.5 Low-Stock Cron Alert Flow
+// jobs/stockAlertJob.js
+const cron = require("node-cron");
+
+cron.schedule("0 */6 * * *", async () => {
+  const lowItems = await InventoryItem.find({
+    $expr: { $lte: ["$currentStock", "$lowStockThreshold"] },
+    isDeleted: false,
+  }).populate("hotel supplier");
+
+  if (lowItems.length === 0) return;
+
+  // Group by hotel
+  const byHotel = groupBy(lowItems, item => item.hotel._id.toString());
+
+  for (const [hotelId, items] of Object.entries(byHotel)) {
+    // 1. Emit socket event to admin room
+    io.to("admin").emit("inventory:alert", {
+      items: items.map(i => ({ name: i.name, currentStock: i.currentStock,
+                               threshold: i.lowStockThreshold, unit: i.unit })),
+    });
+
+    // 2. Send email via Resend
+    await emailService.sendLowStockAlert(items[0].hotel.email, items);
+  }
+});
+
+8. Third-Party Integration Details
+8.1 Razorpay
+Server creates a Razorpay order (amount in paise). Client renders the Razorpay checkout using their script. After payment, the client sends the three Razorpay identifiers to /payments/verify. The server validates the HMAC-SHA256 signature using the Razorpay key secret before confirming anything.
+// config/razorpay.js
+const Razorpay = require("razorpay");
+module.exports = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// utils/razorpayVerify.js
+const crypto = require("crypto");
+const verifyPayment = (orderId, paymentId, signature) => {
+  const body = orderId + "|" + paymentId;
+  const expected = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(body)
+    .digest("hex");
+  return expected === signature;
+};
+
+// Webhook: POST /payments/webhook
+// Use express.raw() (not express.json()) for this route to verify signature
+const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+const body = req.body.toString();
+const signature = req.headers["x-razorpay-signature"];
+const digest = crypto.createHmac("sha256", webhookSecret).update(body).digest("hex");
+if (digest !== signature) return res.status(400).send("Invalid webhook");
+
+8.2 Cloudinary
+Images are uploaded client-side directly to Cloudinary using a signed upload signature generated by the backend. The server never handles raw file streams, keeping memory usage low.
+// config/cloudinary.js
+const cloudinary = require("cloudinary").v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Generate signed upload params (called by client before upload)
+const getSignedUploadParams = (folder, publicId) => {
+  const timestamp = Math.round(new Date().getTime() / 1000);
+  const signature = cloudinary.utils.api_sign_request(
+    { timestamp, folder, public_id: publicId },
+    process.env.CLOUDINARY_API_SECRET
+  );
+  return { timestamp, signature, folder, publicId,
+           apiKey: process.env.CLOUDINARY_API_KEY };
+};
+
+// Presets per resource type:
+// Hotel photos:  w_1200,c_fill,q_auto,f_auto
+// Room images:   w_800,c_fill,q_auto,f_auto
+// Menu items:    w_400,h_400,c_fill,q_auto,f_auto
+// Staff avatars: w_200,h_200,c_face,g_face,q_auto
+
+// Delete on remove:
+await cloudinary.uploader.destroy(publicId);
+
+8.3 Resend (Email)
+// services/emailService.js
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const sendOTP = async (email, otp) => {
+  await resend.emails.send({
+    from: "noreply@yourdomain.com",
+    to: email,
+    subject: "Your HospitalityOS verification code",
+    html: OTPEmailTemplate({ otp }), // React Email component → HTML string
+  });
+};
+
+const sendBookingConfirmation = async (email, booking, invoiceBuffer) => {
+  await resend.emails.send({
+    from: "bookings@yourdomain.com",
+    to: email,
+    subject: `Booking confirmed — ${booking.room?.roomNumber || booking.table?.tableNumber}`,
+    html: BookingConfirmTemplate({ booking }),
+    attachments: [{ filename: "invoice.pdf", content: invoiceBuffer }],
+  });
+};
+
+// Other email functions:
+// sendLowStockAlert(managerEmail, items[])
+// sendOrderStatusUpdate(customerEmail, order)
+// sendPasswordReset(email, otp)
+// sendInvoice(customerEmail, invoiceUrl)
+
+8.4 PDF Invoice (pdfkit)
+// services/pdfService.js
+const PDFDocument = require("pdfkit");
+
+const generateInvoice = (billing) => {
+  return new Promise((resolve) => {
+    const doc = new PDFDocument({ margin: 50 });
+    const buffers = [];
+    doc.on("data", chunk => buffers.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
+
+    // Header: Hotel name, logo, GST number
+    // Billing info: customer name, date, invoice number
+    // Line items table: item | qty | unit price | total
+    // Subtotal, GST, discount, loyalty redeemed, TOTAL
+    // Footer: payment method, thank you note
+    // QR code of invoice URL (for verification)
+
+    doc.end();
+  });
+};
+
+// After generation: upload to Cloudinary as PDF
+const result = await cloudinary.uploader.upload_stream(
+  { resource_type: "raw", folder: "invoices", format: "pdf" },
+  callback
+);
+
+8.5 QR Code Table Ordering
+// services/qrService.js
+const QRCode = require("qrcode");
+
+const generateTableQR = async (tableId) => {
+  const url = `${process.env.FRONTEND_URL}/scan/table/${tableId}`;
+  const pngBuffer = await QRCode.toBuffer(url, { type: "png", width: 400 });
+
+  // Upload to Cloudinary
+  const result = await new Promise((res, rej) => {
+    cloudinary.uploader.upload_stream(
+      { folder: "qr_codes", public_id: `table_${tableId}` },
+      (err, data) => err ? rej(err) : res(data)
+    )(pngBuffer);
+  });
+
+  return { qrCode: result.secure_url, qrUrl: url };
+};
+
+// Called on: POST /tables (new table) and POST /tables/:id/qr (regenerate)
+// Customer QR landing: GET /scan/table/:tableId
+//   → Returns table info + public menu
+//   → Customer can place order as guest or logged-in user
+
+9. Environment Variables
+
+10. Security Practices
+
+11. Performance & Scalability Considerations
+
+12. Deployment Architecture
+
+
+End of Document
+HospitalityOS System Design v1.0
