@@ -76,7 +76,14 @@ exports.getById = async (req, res, next) => {
 
 exports.confirm = async (req, res, next) => {
   try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, { status: "confirmed" }, { new: true });
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (booking.status !== "pending") {
+      return res.status(400).json({ message: "Only pending bookings can be approved" });
+    }
+
+    booking.status = "confirmed";
+    await booking.save();
     res.json({ booking });
   } catch (error) { next(error); }
 };
@@ -101,9 +108,40 @@ exports.checkOut = async (req, res, next) => {
 
 exports.cancel = async (req, res, next) => {
   try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, {
-      status: "cancelled", cancellationReason: req.body.reason, cancelledAt: new Date(),
-    }, { new: true });
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    const isPrivileged = ["admin", "manager", "receptionist"].includes(req.user.role);
+    const isOwner = booking.customer?.toString() === req.user._id?.toString();
+    if (!isPrivileged && !isOwner) {
+      return res.status(403).json({ message: "Not allowed to cancel this booking" });
+    }
+
+    booking.status = "cancelled";
+    booking.cancellationReason = req.body.reason || "Cancelled";
+    booking.cancelledAt = new Date();
+    await booking.save();
+
+    if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "available" });
+    if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "available" });
+    if (req.app.get("io")) emitBookingCancelled(req.app.get("io"), booking);
+    res.json({ booking });
+  } catch (error) { next(error); }
+};
+
+exports.reject = async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (booking.status !== "pending") {
+      return res.status(400).json({ message: "Only pending bookings can be rejected" });
+    }
+
+    booking.status = "rejected";
+    booking.cancellationReason = req.body.reason || "Rejected by admin";
+    booking.cancelledAt = new Date();
+    await booking.save();
+
     if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "available" });
     if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "available" });
     if (req.app.get("io")) emitBookingCancelled(req.app.get("io"), booking);

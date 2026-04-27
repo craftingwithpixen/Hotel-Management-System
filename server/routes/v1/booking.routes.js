@@ -11,6 +11,7 @@ router.get("/available-rooms", ctrl.availableRooms);
 router.get("/available-tables", ctrl.availableTables);
 router.get("/:id", authenticate, authorize("admin", "manager", "receptionist"), ctrl.getById);
 router.put("/:id/confirm", authenticate, authorize("admin", "manager", "receptionist"), ctrl.confirm);
+router.put("/:id/reject", authenticate, authorize("admin", "manager", "receptionist"), ctrl.reject);
 router.put("/:id/checkin", authenticate, authorize("admin", "manager", "receptionist"), ctrl.checkIn);
 router.put("/:id/checkout", authenticate, authorize("admin", "manager", "receptionist"), ctrl.checkOut);
 router.put("/:id/cancel", authenticate, ctrl.cancel);

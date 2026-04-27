@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { HiOutlineSearch, HiOutlineStar, HiOutlineArrowRight } from 'react-icons/hi';
+import { HiOutlineStar, HiOutlineArrowRight } from 'react-icons/hi';
 import { Link } from 'react-router-dom';
 
 const categories = [

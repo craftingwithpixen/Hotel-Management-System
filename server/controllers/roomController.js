@@ -1,5 +1,24 @@
 const Room = require("../models/Room");
 const Booking = require("../models/Booking");
+const Hotel = require("../models/Hotel");
+const { cloudinary } = require("../config/cloudinary");
+
+const parseAmenities = (amenities) => {
+  if (Array.isArray(amenities)) return amenities.filter(Boolean);
+  if (typeof amenities === "string") {
+    return amenities
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const normalizePayload = (body) => {
+  const payload = { ...body };
+  if (payload.amenities !== undefined) payload.amenities = parseAmenities(payload.amenities);
+  return payload;
+};
 
 exports.list = async (req, res, next) => {
   try {
@@ -39,14 +58,23 @@ exports.getById = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const room = await Room.create(req.body);
+    const payload = normalizePayload(req.body);
+    if (!payload.hotel) {
+      const hotel = await Hotel.findOne().select("_id");
+      if (!hotel) {
+        return res.status(400).json({ message: "Hotel setup is required before creating rooms" });
+      }
+      payload.hotel = hotel._id;
+    }
+    const room = await Room.create(payload);
     res.status(201).json({ room });
   } catch (error) { next(error); }
 };
 
 exports.update = async (req, res, next) => {
   try {
-    const room = await Room.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const payload = normalizePayload(req.body);
+    const room = await Room.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true });
     if (!room) return res.status(404).json({ message: "Room not found" });
     res.json({ room });
   } catch (error) { next(error); }
@@ -84,5 +112,29 @@ exports.getRoomBookings = async (req, res, next) => {
       .populate("customer", "name email phone")
       .sort({ createdAt: -1 });
     res.json({ bookings });
+  } catch (error) { next(error); }
+};
+
+exports.uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "Image file is required" });
+
+    const room = await Room.findById(req.params.id);
+    if (!room || room.isDeleted) return res.status(404).json({ message: "Room not found" });
+
+    const uploaded = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "hospitalityos/rooms" },
+        (error, result) => {
+          if (error) return reject(error);
+          return resolve(result);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    room.images = [uploaded.secure_url, ...(room.images || [])];
+    await room.save();
+    res.json({ room });
   } catch (error) { next(error); }
 };

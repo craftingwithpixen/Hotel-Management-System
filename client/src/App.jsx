@@ -27,6 +27,11 @@ import Settings from './pages/admin/Settings';
 
 // Customer Pages
 import Browse from './pages/customer/Browse';
+import BookingsCustomer from './pages/customer/Bookings';
+import OrdersCustomer from './pages/customer/Orders';
+import Loyalty from './pages/customer/Loyalty';
+import Profile from './pages/customer/Profile';
+import BookRoom from './pages/customer/BookRoom';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, isAuthenticated, isLoading } = useAuthStore();
@@ -64,7 +69,11 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
-          <Route path="rooms" element={<Rooms />} />
+          <Route path="rooms" element={
+            <ProtectedRoute allowedRoles={['admin', 'manager']}>
+              <Rooms />
+            </ProtectedRoute>
+          } />
           <Route path="tables" element={<Tables />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="orders" element={<Orders />} />
@@ -79,7 +88,11 @@ function App() {
         {/* Customer Routes */}
         <Route path="/customer" element={<CustomerLayout />}>
           <Route index element={<Browse />} />
-          {/* Future customer routes can be added here */}
+          <Route path="bookings" element={<BookingsCustomer />} />
+          <Route path="orders" element={<OrdersCustomer />} />
+          <Route path="loyalty" element={<Loyalty />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="book-room" element={<BookRoom />} />
         </Route>
 
         {/* Default Redirect */}

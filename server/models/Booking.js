@@ -14,7 +14,7 @@ const bookingSchema = new mongoose.Schema(
     guestCount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "checked_in", "checked_out", "cancelled"],
+      enum: ["pending", "confirmed", "checked_in", "checked_out", "cancelled", "rejected"],
       default: "pending",
     },
     isWalkIn: { type: Boolean, default: false },

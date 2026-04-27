@@ -20,6 +20,16 @@ const roomSchema = new mongoose.Schema(
       enum: ["clean", "dirty", "in_progress"],
       default: "clean",
     },
+    checkInTime: {
+      type: String,
+      default: "14:00",
+      match: [/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid check-in time format"],
+    },
+    checkOutTime: {
+      type: String,
+      default: "11:00",
+      match: [/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid check-out time format"],
+    },
     floor: { type: Number },
     capacity: { type: Number, required: true },
     amenities: [{ type: String }],
