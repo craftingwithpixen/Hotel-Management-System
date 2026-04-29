@@ -1,0 +1,212 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "submit": "Submit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "total": "Total",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "price": "Price",
+    "quantity": "Quantity",
+    "notes": "Notes",
+    "description": "Description",
+    "type": "Type",
+    "role": "Role",
+    "amount": "Amount"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "rooms": "Rooms",
+    "tables": "Tables",
+    "bookings": "Bookings",
+    "orders": "Orders",
+    "menu": "Menu",
+    "staff": "Staff",
+    "inventory": "Inventory",
+    "billing": "Billing",
+    "reports": "Reports",
+    "settings": "Settings",
+    "logout": "Logout",
+    "profile": "Profile",
+    "loyalty": "Loyalty Points",
+    "kitchenBoard": "Kitchen Board",
+    "orderPad": "Order Pad",
+    "orderHistory": "Order History",
+    "checkIn": "Check In / Out",
+    "hotelSettings": "Hotel Settings"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "loginBtn": "Sign In",
+    "registerBtn": "Create Account",
+    "staffLogin": "Staff Login",
+    "customerLogin": "Customer Login",
+    "forgotPassword": "Forgot Password?",
+    "otpSent": "OTP sent to your email",
+    "enterOtp": "Enter OTP",
+    "verifyOtp": "Verify OTP",
+    "resendOtp": "Resend OTP",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "todayRevenue": "Today's Revenue",
+    "totalBookings": "Total Bookings",
+    "activeOrders": "Active Orders",
+    "roomOccupancy": "Room Occupancy",
+    "recentBookings": "Recent Bookings",
+    "quickActions": "Quick Actions",
+    "alerts": "Alerts",
+    "revenueOverview": "Revenue Overview",
+    "roomStatus": "Room Status",
+    "newBooking": "New Booking",
+    "addOrder": "Add Order",
+    "checkIn": "Check In",
+    "generateBill": "Generate Bill"
+  },
+  "booking": {
+    "roomBooking": "Room Booking",
+    "tableBooking": "Table Booking",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "guestCount": "Guest Count",
+    "specialRequests": "Special Requests",
+    "bookingDate": "Booking Date",
+    "timeSlot": "Time Slot",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "checked_in": "Checked In",
+      "checked_out": "Checked Out",
+      "cancelled": "Cancelled",
+      "rejected": "Rejected"
+    }
+  },
+  "order": {
+    "newOrder": "New Order",
+    "tableNumber": "Table Number",
+    "items": "Items",
+    "addItem": "Add Item",
+    "removeItem": "Remove Item",
+    "printKOT": "Print KOT",
+    "status": {
+      "pending": "Pending",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "served": "Served",
+      "billed": "Billed"
+    }
+  },
+  "billing": {
+    "generateBill": "Generate Bill",
+    "subtotal": "Subtotal",
+    "gst": "GST",
+    "discount": "Discount",
+    "loyaltyPoints": "Loyalty Points",
+    "total": "Total",
+    "splitBill": "Split Bill",
+    "applyCoupon": "Apply Coupon",
+    "payNow": "Pay Now",
+    "cashPayment": "Cash Payment",
+    "downloadInvoice": "Download Invoice",
+    "status": {
+      "draft": "Draft",
+      "finalized": "Finalized",
+      "paid": "Paid"
+    }
+  },
+  "room": {
+    "roomNumber": "Room Number",
+    "type": "Room Type",
+    "pricePerNight": "Price / Night",
+    "capacity": "Capacity",
+    "floor": "Floor",
+    "amenities": "Amenities",
+    "cleaningStatus": "Cleaning Status",
+    "status": {
+      "available": "Available",
+      "booked": "Booked",
+      "maintenance": "Maintenance"
+    },
+    "cleaning": {
+      "clean": "Clean",
+      "dirty": "Dirty",
+      "in_progress": "In Progress"
+    },
+    "types": {
+      "single": "Single",
+      "double": "Double",
+      "deluxe": "Deluxe",
+      "suite": "Suite"
+    }
+  },
+  "inventory": {
+    "itemName": "Item Name",
+    "unit": "Unit",
+    "currentStock": "Current Stock",
+    "threshold": "Low Stock Threshold",
+    "category": "Category",
+    "supplier": "Supplier",
+    "restock": "Restock",
+    "consume": "Log Consumption",
+    "lowStockAlert": "Low Stock Alert"
+  },
+  "staff": {
+    "employeeId": "Employee ID",
+    "department": "Department",
+    "salary": "Monthly Salary",
+    "joiningDate": "Joining Date",
+    "attendance": "Attendance",
+    "markAttendance": "Mark Attendance",
+    "salarySlip": "Salary Slip",
+    "present": "Present",
+    "absent": "Absent"
+  },
+  "customer": {
+    "myBookings": "My Bookings",
+    "myOrders": "My Orders",
+    "myBills": "My Bills",
+    "loyaltyPoints": "Loyalty Points",
+    "submitFeedback": "Submit Feedback",
+    "submitComplaint": "Submit Complaint",
+    "scanTable": "Scan Table QR",
+    "browseMenu": "Browse Menu",
+    "bookRoom": "Book a Room"
+  },
+  "feedback": {
+    "rating": "Rating",
+    "comment": "Comment",
+    "category": {
+      "room": "Room",
+      "food": "Food",
+      "service": "Service",
+      "overall": "Overall"
+    },
+    "thankYou": "Thank you for your feedback!"
+  }
+}

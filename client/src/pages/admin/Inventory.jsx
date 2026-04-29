@@ -1,22 +1,42 @@
-import { useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle, HiOutlineRefresh } from 'react-icons/hi';
+import { useEffect, useState } from 'react';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-
-const demoInventory = [
-  { _id: '1', name: 'Basmati Rice', category: 'Grains', currentStock: 45, unit: 'kg', lowStockThreshold: 10, supplier: 'Green Valley Foods' },
-  { _id: '2', name: 'Refined Oil', category: 'Oils', currentStock: 8, unit: 'Ltr', lowStockThreshold: 15, supplier: 'Kitchen King' },
-  { _id: '3', name: 'Sugar', category: 'Essentials', currentStock: 25, unit: 'kg', lowStockThreshold: 5, supplier: 'Sweet Mart' },
-  { _id: '4', name: 'Milk', category: 'Dairy', currentStock: 4, unit: 'Ltr', lowStockThreshold: 10, supplier: 'City Dairy' },
-  { _id: '5', name: 'Chicken Breast', category: 'Meat', currentStock: 12, unit: 'kg', lowStockThreshold: 5, supplier: 'Fresh Cuts' },
-];
+import api from '../../services/api';
 
 export default function Inventory() {
-  const [items, setItems] = useState(demoInventory);
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState([]);
+  const [hotelId, setHotelId] = useState(null);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: '', category: 'Grains', currentStock: '', unit: 'kg', lowStockThreshold: '' });
+  const [form, setForm] = useState({
+    name: '',
+    category: 'Grains',
+    currentStock: '',
+    unit: 'kg',
+    lowStockThreshold: '',
+  });
 
-  const filtered = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const [hotelRes, inventoryRes] = await Promise.all([api.get('/hotel'), api.get('/inventory')]);
+      setHotelId(hotelRes.data?.hotel?._id || null);
+      setItems(inventoryRes.data?.items || []);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to load inventory');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const filtered = items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="animate-fade">
@@ -38,7 +58,12 @@ export default function Inventory() {
       </div>
 
       <div className="grid grid-auto gap-lg">
-        {filtered.map(item => {
+        {loading ? (
+          <div className="card" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No inventory items found</div>
+        ) : (
+        filtered.map(item => {
           const isLow = item.currentStock <= item.lowStockThreshold;
           return (
             <div key={item._id} className="card card-hover" style={{ borderColor: isLow ? 'var(--danger-light)' : 'var(--border)' }}>
@@ -66,12 +91,21 @@ export default function Inventory() {
               </div>
 
               <div className="flex gap-sm">
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }}><HiOutlineRefresh /> Restock</button>
-                <button className="btn btn-ghost btn-sm">History</button>
+                <button
+                  className="btn btn-outline btn-sm"
+                  style={{ flex: 1 }}
+                  onClick={() => toast('Restock is available via Inventory API endpoints')}
+                >
+                  Restock
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => toast('History is available on the inventory detail screen')}>
+                  History
+                </button>
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
 
       {showModal && (
@@ -81,23 +115,57 @@ export default function Inventory() {
               <h2>Add Inventory Item</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={e => { e.preventDefault(); setItems([...items, { ...form, _id: Date.now().toString() }]); setShowModal(false); toast.success('Item added'); }}>
-              <div className="input-group mb-md"><label>Item Name</label><input className="input" required onChange={e => setForm({...form, name: e.target.value})} /></div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!hotelId) return toast.error('Hotel not configured');
+                try {
+                  await api.post('/inventory', {
+                    hotel: hotelId,
+                    name: form.name,
+                    category: form.category || undefined,
+                    unit: form.unit,
+                    currentStock: Number(form.currentStock),
+                    lowStockThreshold: Number(form.lowStockThreshold),
+                  });
+                  toast.success('Item added');
+                  setShowModal(false);
+                  setForm({ name: '', category: 'Grains', currentStock: '', unit: 'kg', lowStockThreshold: '' });
+                  fetchAll();
+                } catch (err) {
+                  toast.error(err?.response?.data?.message || 'Failed to add item');
+                }
+              }}
+            >
+              <div className="input-group mb-md">
+                <label>Item Name</label>
+                <input className="input" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
               <div className="grid grid-2 gap-md mb-md">
                 <div className="input-group"><label>Category</label>
-                  <select className="input" onChange={e => setForm({...form, category: e.target.value})}>
+                  <select className="input" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                     <option>Grains</option><option>Oils</option><option>Dairy</option><option>Meat</option><option>Vegetables</option><option>Beverages</option>
                   </select>
                 </div>
                 <div className="input-group"><label>Unit</label>
-                  <select className="input" onChange={e => setForm({...form, unit: e.target.value})}>
-                    <option>kg</option><option>Ltr</option><option>Packet</option><option>Box</option><option>Unit</option>
+                  <select className="input" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}>
+                    <option value="kg">kg</option>
+                    <option value="litre">litre</option>
+                    <option value="pcs">pcs</option>
+                    <option value="box">box</option>
+                    <option value="packet">packet</option>
                   </select>
                 </div>
               </div>
               <div className="grid grid-2 gap-md mb-lg">
-                <div className="input-group"><label>Initial Stock</label><input className="input" type="number" required onChange={e => setForm({...form, currentStock: parseInt(e.target.value)})} /></div>
-                <div className="input-group"><label>Low Stock Warning</label><input className="input" type="number" required onChange={e => setForm({...form, lowStockThreshold: parseInt(e.target.value)})} /></div>
+                <div className="input-group">
+                  <label>Initial Stock</label>
+                  <input className="input" type="number" required value={form.currentStock} onChange={e => setForm({ ...form, currentStock: e.target.value })} />
+                </div>
+                <div className="input-group">
+                  <label>Low Stock Warning</label>
+                  <input className="input" type="number" required value={form.lowStockThreshold} onChange={e => setForm({ ...form, lowStockThreshold: e.target.value })} />
+                </div>
               </div>
               <div className="flex gap-md justify-end">
                 <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>

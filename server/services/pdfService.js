@@ -1,4 +1,5 @@
 const PDFDocument = require("pdfkit");
+const { cloudinary } = require("../config/cloudinary");
 
 const generateInvoice = (billing) => {
   return new Promise((resolve) => {
@@ -75,4 +76,24 @@ const generateInvoice = (billing) => {
   });
 };
 
-module.exports = { generateInvoice };
+const uploadInvoiceToCloudinary = (buffer, billingId) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "invoices",
+        resource_type: "raw",
+        format: "pdf",
+        public_id: `invoice_${billingId}`,
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        return resolve(result.secure_url);
+      }
+    );
+
+    stream.end(buffer);
+  });
+};
+
+module.exports = { generateInvoice, uploadInvoiceToCloudinary };

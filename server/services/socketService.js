@@ -1,4 +1,22 @@
-// Socket.io emit helper functions
+// Socket.io emit helper functions + persistent notification side-effects
+const User = require("../models/User");
+const Notification = require("../models/Notification");
+
+const notifyRoles = async (roles, { type, message, payload }) => {
+  if (!roles?.length) return;
+  const recipients = await User.find({ role: { $in: roles }, isDeleted: false }).select("_id");
+  if (!recipients?.length) return;
+
+  await Notification.insertMany(
+    recipients.map((u) => ({
+      recipient: u._id,
+      type,
+      message: message || "",
+      payload: payload || {},
+    }))
+  );
+};
+
 const emitNewOrder = (io, order) => {
   io.to("kitchen").emit("new:order", {
     orderId: order._id,
@@ -37,6 +55,18 @@ const emitNewBooking = (io, booking) => {
     customerName: booking.customer?.name,
     checkIn: booking.checkIn,
   });
+
+  // Persistent in-app notification
+  void notifyRoles(["receptionist"], {
+    type: "booking:new",
+    message: `New ${booking.type} booking — ${booking.customer?.name || "Customer"}`,
+    payload: {
+      bookingId: booking._id,
+      bookingType: booking.type,
+      customerName: booking.customer?.name,
+      checkIn: booking.checkIn,
+    },
+  }).catch(() => {});
 };
 
 const emitBookingCancelled = (io, booking) => {
@@ -45,6 +75,16 @@ const emitBookingCancelled = (io, booking) => {
     type: booking.type,
     reason: booking.cancellationReason,
   });
+
+  void notifyRoles(["receptionist", "admin"], {
+    type: "booking:cancelled",
+    message: `Booking cancelled — ${booking.customer?.name || "Customer"}`,
+    payload: {
+      bookingId: booking._id,
+      bookingType: booking.type,
+      reason: booking.cancellationReason,
+    },
+  }).catch(() => {});
 };
 
 const emitInventoryAlert = (io, items) => {
@@ -56,6 +96,19 @@ const emitInventoryAlert = (io, items) => {
       unit: i.unit,
     })),
   });
+
+  void notifyRoles(["admin"], {
+    type: "inventory:alert",
+    message: `Low stock alert (${items.length} item${items.length === 1 ? "" : "s"})`,
+    payload: {
+      items: items.map((i) => ({
+        name: i.name,
+        currentStock: i.currentStock,
+        threshold: i.lowStockThreshold,
+        unit: i.unit,
+      })),
+    },
+  }).catch(() => {});
 };
 
 const emitPaymentCaptured = (io, billing) => {
@@ -64,6 +117,16 @@ const emitPaymentCaptured = (io, billing) => {
     amount: billing.total,
     method: billing.payment?.method,
   });
+
+  void notifyRoles(["admin"], {
+    type: "payment:captured",
+    message: `Payment captured — Invoice ${billing._id}`,
+    payload: {
+      billingId: billing._id,
+      amount: billing.total,
+      method: billing.payment?.method,
+    },
+  }).catch(() => {});
 };
 
 const emitTableStatus = (io, table) => {
@@ -71,6 +134,16 @@ const emitTableStatus = (io, table) => {
     tableId: table._id,
     status: table.status,
   });
+
+  void notifyRoles(["receptionist", "admin"], {
+    type: "table:status",
+    message: `Table status updated — ${table.tableNumber || table._id}`,
+    payload: {
+      tableId: table._id,
+      tableNumber: table.tableNumber,
+      status: table.status,
+    },
+  }).catch(() => {});
 };
 
 module.exports = {

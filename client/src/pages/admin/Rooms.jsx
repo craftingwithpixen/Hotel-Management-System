@@ -29,13 +29,6 @@ export default function Rooms() {
   });
   const [uploadFile, setUploadFile] = useState(null);
 
-  const demoRooms = [
-    { _id: '1', roomNumber: '101', type: 'single', pricePerNight: 2500, capacity: 1, floor: 1, status: 'available', cleaningStatus: 'clean', checkInTime: '14:00', checkOutTime: '11:00', images: [] },
-    { _id: '2', roomNumber: '102', type: 'double', pricePerNight: 4000, capacity: 2, floor: 1, status: 'booked', cleaningStatus: 'clean', checkInTime: '14:00', checkOutTime: '11:00', images: [] },
-    { _id: '3', roomNumber: '201', type: 'deluxe', pricePerNight: 6500, capacity: 3, floor: 2, status: 'available', cleaningStatus: 'dirty', checkInTime: '13:00', checkOutTime: '10:30', images: [] },
-    { _id: '4', roomNumber: '301', type: 'suite', pricePerNight: 12000, capacity: 4, floor: 3, status: 'maintenance', cleaningStatus: 'in_progress', checkInTime: '15:00', checkOutTime: '11:00', images: [] },
-  ];
-
   const fetchRooms = async () => {
     if (!canManageRooms) {
       setIsFetching(false);
@@ -45,7 +38,7 @@ export default function Rooms() {
       const { data } = await api.get('/rooms', { params: filter });
       setRooms(data.rooms || []);
     } catch {
-      setRooms(demoRooms);
+      setRooms([]);
     } finally {
       setIsFetching(false);
     }
@@ -56,7 +49,7 @@ export default function Rooms() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canManageRooms]);
 
-  const displayRooms = (rooms.length ? rooms : demoRooms).filter(r =>
+  const displayRooms = rooms.filter(r =>
     (!search || r.roomNumber.toLowerCase().includes(search.toLowerCase())) &&
     (!filter.type || r.type === filter.type) && (!filter.status || r.status === filter.status)
   );

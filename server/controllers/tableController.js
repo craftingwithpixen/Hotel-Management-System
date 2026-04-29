@@ -65,6 +65,8 @@ exports.regenerateQR = async (req, res, next) => {
 exports.downloadQR = async (req, res, next) => {
   try {
     const table = await Table.findById(req.params.id);
-    res.json({ qrCode: table.qrCode });
+    if (!table) return res.status(404).json({ message: "Table not found" });
+    // `qrCode` is stored as either a Cloudinary secure_url or a local data URL (fallback).
+    res.json({ qrCode: table.qrCode, qrUrl: table.qrUrl });
   } catch (error) { next(error); }
 };

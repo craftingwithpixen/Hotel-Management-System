@@ -1,23 +1,58 @@
-import { useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlinePencil, HiOutlineTrash, HiOutlineCalendar } from 'react-icons/hi';
+import { useEffect, useState } from 'react';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineCalendar, HiOutlineTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-
-const demoStaff = [
-  { _id: '1', name: 'Rajesh Kumar', role: 'manager', department: 'Management', email: 'rajesh@example.com', phone: '9876543210', salary: 45000, status: 'active' },
-  { _id: '2', name: 'Suresh Patil', role: 'waiter', department: 'Restaurant', email: 'suresh@example.com', phone: '9876543211', salary: 18000, status: 'active' },
-  { _id: '3', name: 'Vikram Singh', role: 'chef', department: 'Kitchen', email: 'vikram@example.com', phone: '9876543212', salary: 35000, status: 'active' },
-  { _id: '4', name: 'Anjali Deshmukh', role: 'receptionist', department: 'Front Desk', email: 'anjali@example.com', phone: '9876543213', salary: 22000, status: 'active' },
-];
+import api from '../../services/api';
 
 export default function Staff() {
-  const [staff, setStaff] = useState(demoStaff);
+  const [loading, setLoading] = useState(true);
+  const [staff, setStaff] = useState([]);
+  const [hotelId, setHotelId] = useState(null);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', role: 'waiter', department: 'Restaurant', salary: '', phone: '' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    role: 'waiter',
+    department: 'Restaurant',
+    salary: '',
+    employeeId: '',
+  });
 
-  const filtered = staff.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.department.toLowerCase().includes(search.toLowerCase())
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const [hotelRes, staffRes] = await Promise.all([api.get('/hotel'), api.get('/staff')]);
+      setHotelId(hotelRes.data?.hotel?._id || null);
+      const rawStaff = staffRes.data?.staff || [];
+      const mapped = rawStaff.map((s) => ({
+        _id: s._id,
+        name: s.user?.name,
+        email: s.user?.email,
+        phone: s.user?.phone,
+        role: s.user?.role,
+        department: s.department,
+        salary: s.salary,
+      }));
+      setStaff(mapped);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to load staff');
+      setStaff([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const filtered = staff.filter(
+    (s) =>
+      (s.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (s.department || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -52,7 +87,20 @@ export default function Staff() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(s => (
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+                  Loading...
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+                  No staff found
+                </td>
+              </tr>
+            ) : (
+            filtered.map((s) => (
               <tr key={s._id}>
                 <td>
                   <div className="flex items-center gap-sm">
@@ -70,12 +118,12 @@ export default function Staff() {
                 <td>
                   <div className="flex gap-xs">
                     <button className="btn btn-ghost btn-sm btn-icon" title="Attendance"><HiOutlineCalendar /></button>
-                    <button className="btn btn-ghost btn-sm btn-icon" title="Edit"><HiOutlinePencil /></button>
                     <button className="btn btn-ghost btn-sm btn-icon" style={{ color: 'var(--danger)' }} title="Delete"><HiOutlineTrash /></button>
                   </div>
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
       </div>
@@ -87,28 +135,103 @@ export default function Staff() {
               <h2>Add New Staff</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={e => { e.preventDefault(); setStaff([...staff, { ...form, _id: Date.now().toString(), status: 'active' }]); setShowModal(false); toast.success('Staff added'); }}>
-              <div className="input-group mb-md"><label>Full Name</label><input className="input" required onChange={e => setForm({...form, name: e.target.value})} /></div>
-              <div className="grid grid-2 gap-md mb-md">
-                <div className="input-group"><label>Email</label><input className="input" type="email" required onChange={e => setForm({...form, email: e.target.value})} /></div>
-                <div className="input-group"><label>Phone</label><input className="input" required onChange={e => setForm({...form, phone: e.target.value})} /></div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!hotelId) return toast.error('Hotel not configured yet');
+                try {
+                  await api.post('/staff', {
+                    name: form.name,
+                    email: form.email,
+                    password: form.password,
+                    phone: form.phone,
+                    role: form.role,
+                    hotelId,
+                    department: form.department,
+                    salary: Number(form.salary),
+                    employeeId: form.employeeId,
+                  });
+                  toast.success('Staff added');
+                  setShowModal(false);
+                  setForm({
+                    name: '',
+                    email: '',
+                    password: '',
+                    phone: '',
+                    role: 'waiter',
+                    department: 'Restaurant',
+                    salary: '',
+                    employeeId: '',
+                  });
+                  fetchAll();
+                } catch (err) {
+                  toast.error(err?.response?.data?.message || 'Failed to add staff');
+                }
+              }}
+            >
+              <div className="input-group mb-md">
+                <label>Full Name</label>
+                <input className="input" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div className="grid grid-2 gap-md mb-md">
-                <div className="input-group"><label>Role</label>
-                  <select className="input" onChange={e => setForm({...form, role: e.target.value})}>
-                    <option value="waiter">Waiter</option><option value="chef">Chef</option><option value="receptionist">Receptionist</option><option value="manager">Manager</option>
+                <div className="input-group">
+                  <label>Email</label>
+                  <input className="input" type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                </div>
+                <div className="input-group">
+                  <label>Phone</label>
+                  <input className="input" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="grid grid-2 gap-md mb-md">
+                <div className="input-group">
+                  <label>Password</label>
+                  <input className="input" type="password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                </div>
+                <div className="input-group">
+                  <label>Employee ID</label>
+                  <input className="input" required value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="grid grid-2 gap-md mb-md">
+                <div className="input-group">
+                  <label>Role</label>
+                  <select className="input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+                    <option value="waiter">Waiter</option>
+                    <option value="chef">Chef</option>
+                    <option value="receptionist">Receptionist</option>
+                    <option value="manager">Manager</option>
                   </select>
                 </div>
-                <div className="input-group"><label>Department</label>
-                  <select className="input" onChange={e => setForm({...form, department: e.target.value})}>
-                    <option value="Restaurant">Restaurant</option><option value="Kitchen">Kitchen</option><option value="Front Desk">Front Desk</option><option value="Management">Management</option>
+                <div className="input-group">
+                  <label>Department</label>
+                  <select className="input" value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}>
+                    <option value="Restaurant">Restaurant</option>
+                    <option value="Kitchen">Kitchen</option>
+                    <option value="Front Desk">Front Desk</option>
+                    <option value="Management">Management</option>
                   </select>
                 </div>
               </div>
-              <div className="input-group mb-lg"><label>Monthly Salary (₹)</label><input className="input" type="number" required onChange={e => setForm({...form, salary: parseInt(e.target.value)})} /></div>
+
+              <div className="input-group mb-lg">
+                <label>Monthly Salary (₹)</label>
+                <input
+                  className="input"
+                  type="number"
+                  required
+                  value={form.salary}
+                  onChange={e => setForm({ ...form, salary: e.target.value })}
+                />
+              </div>
+
               <div className="flex gap-md justify-end">
                 <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Add Employee</button>
+                <button type="submit" className="btn btn-primary">
+                  Add Employee
+                </button>
               </div>
             </form>
           </div>

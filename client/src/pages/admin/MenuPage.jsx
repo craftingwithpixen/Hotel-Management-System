@@ -1,15 +1,7 @@
-import { useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlinePencil, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
+import { useEffect, useState } from 'react';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-
-const demoMenu = [
-  { _id: '1', name: 'Butter Chicken', category: 'non_veg', price: 320, isAvailable: true, prepTime: 25, description: 'Creamy tomato-based curry' },
-  { _id: '2', name: 'Paneer Tikka', category: 'veg', price: 260, isAvailable: true, prepTime: 20, description: 'Grilled cottage cheese' },
-  { _id: '3', name: 'Masala Dosa', category: 'veg', price: 150, isAvailable: true, prepTime: 15, description: 'Crispy rice crepe' },
-  { _id: '4', name: 'Mango Lassi', category: 'drinks', price: 120, isAvailable: true, prepTime: 5, description: 'Yogurt mango smoothie' },
-  { _id: '5', name: 'Gulab Jamun', category: 'dessert', price: 100, isAvailable: false, prepTime: 10, description: 'Fried milk balls in syrup' },
-  { _id: '6', name: 'Biryani', category: 'non_veg', price: 350, isAvailable: true, prepTime: 35, description: 'Aromatic spiced rice' },
-];
+import api from '../../services/api';
 
 const catCfg = {
   veg: { emoji: '🥬', color: '#10b981', label: 'Veg' },
@@ -20,20 +12,67 @@ const catCfg = {
 };
 
 export default function MenuPage() {
-  const [items, setItems] = useState(demoMenu);
+  const [items, setItems] = useState([]);
   const [activeCat, setActiveCat] = useState('');
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [hotelId, setHotelId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: '', category: 'veg', price: '', description: '', prepTime: '' });
+
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const [hRes, menuRes] = await Promise.all([api.get('/hotel'), api.get('/menu')]);
+      setHotelId(hRes.data?.hotel?._id || null);
+      setItems(menuRes.data?.items || []);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to load menu');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = items.filter(i =>
     (!activeCat || i.category === activeCat) &&
     (!search || i.name.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const toggle = (id) => {
-    setItems(items.map(i => i._id === id ? { ...i, isAvailable: !i.isAvailable } : i));
-    toast.success('Updated');
+  const toggle = async (id) => {
+    try {
+      await api.put(`/menu/${id}/toggle`);
+      toast.success('Menu updated');
+      fetchAll();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update item');
+    }
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!hotelId) return toast.error('Hotel not configured yet');
+    try {
+      await api.post('/menu', {
+        hotel: hotelId,
+        name: form.name,
+        category: form.category,
+        price: Number(form.price),
+        description: form.description || undefined,
+        prepTime: form.prepTime ? Number(form.prepTime) : undefined,
+      });
+      toast.success('Added menu item');
+      setShowModal(false);
+      setForm({ name: '', category: 'veg', price: '', description: '', prepTime: '' });
+      fetchAll();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to add item');
+    }
   };
 
   return (
@@ -57,7 +96,12 @@ export default function MenuPage() {
       </div>
 
       <div className="grid grid-auto gap-lg">
-        {filtered.map(item => {
+        {loading ? (
+          <div className="card" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No menu items found</div>
+        ) : (
+        filtered.map(item => {
           const c = catCfg[item.category] || catCfg.veg;
           return (
             <div key={item._id} className="card card-hover" style={{ opacity: item.isAvailable ? 1 : 0.6 }}>
@@ -68,26 +112,29 @@ export default function MenuPage() {
               </div>
               <p className="text-sm text-muted mb-md">{item.description}</p>
               <div className="flex gap-sm">
-                <button className="btn btn-outline btn-sm" style={{ flex: 1 }}><HiOutlinePencil /> Edit</button>
                 <button className={`btn btn-sm btn-icon ${item.isAvailable ? 'btn-success' : 'btn-danger'}`} onClick={() => toggle(item._id)}>
                   {item.isAvailable ? <HiOutlineEye /> : <HiOutlineEyeOff />}
                 </button>
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header"><h2>Add Item</h2><button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>✕</button></div>
-            <form onSubmit={e => { e.preventDefault(); setItems([...items, { ...form, _id: Date.now().toString(), isAvailable: true }]); setShowModal(false); toast.success('Added'); }}>
+            <form onSubmit={submit}>
               <div className="input-group mb-md"><label>Name</label><input className="input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
               <div className="grid grid-2 gap-md mb-md">
                 <div className="input-group"><label>Category</label><select className="input" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
                   {Object.entries(catCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></div>
                 <div className="input-group"><label>Price (₹)</label><input className="input" type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} required /></div>
+              </div>
+              <div className="grid grid-2 gap-md mb-md">
+                <div className="input-group"><label>Prep Time (mins)</label><input className="input" type="number" value={form.prepTime} onChange={e => setForm({...form, prepTime: e.target.value})} /></div>
               </div>
               <div className="input-group mb-lg"><label>Description</label><textarea className="input" value={form.description} onChange={e => setForm({...form, description: e.target.value})} style={{ minHeight: 60 }} /></div>
               <div className="flex gap-md justify-end"><button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button><button type="submit" className="btn btn-primary">Add</button></div>
