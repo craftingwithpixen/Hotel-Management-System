@@ -5,35 +5,62 @@ import api from '../../services/api';
 
 const COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#8b5cf6'];
 
-const mockRevenueData = Array.from({ length: 30 }, (_, i) => ({
-  day: i + 1, revenue: Math.floor(Math.random() * 50000) + 10000,
-}));
-
-const mockOccupancy = [
-  { name: 'Occupied', value: 68 }, { name: 'Available', value: 25 }, { name: 'Maintenance', value: 7 },
-];
-
 export default function Dashboard() {
   const [stats, setStats] = useState({
     revenue: 0, bookings: 0, orders: 0, occupancy: 0,
   });
   const [loading, setLoading] = useState(true);
   const [recentBookings, setRecentBookings] = useState([]);
+  const [monthlyChartData, setMonthlyChartData] = useState([]);
+  const [occupancySlices, setOccupancySlices] = useState([]);
+  const [lowStockItems, setLowStockItems] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dailyRes, bookingsRes] = await Promise.all([
-          api.get('/reports/daily').catch(() => ({ data: {} })),
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const year = now.getFullYear();
+
+        const [dailyRes, occupancyRes, monthlyRes, bookingsRes, alertsRes] = await Promise.all([
+          api.get(`/reports/daily?date=${todayStr}`).catch(() => ({ data: {} })),
+          api.get('/reports/occupancy').catch(() => ({ data: {} })),
+          api.get(`/reports/monthly?month=${month}&year=${year}`).catch(() => ({ data: { data: [] } })),
           api.get('/bookings?limit=5').catch(() => ({ data: { bookings: [] } })),
+          api.get('/inventory/alerts').catch(() => ({ data: { items: [] } })),
         ]);
+
+        const daily = dailyRes.data || {};
+        const occ = occupancyRes.data || {};
+        const monthlyRows = monthlyRes.data?.data || [];
+
+        const totalRooms = occ.totalRooms || 0;
+        const bookedRooms = occ.bookedRooms || 0;
+        const bookedPct = totalRooms ? (bookedRooms / totalRooms) * 100 : 0;
+        const availablePct = Math.max(0, 100 - bookedPct);
+
         setStats({
-          revenue: dailyRes.data?.revenue || 125400,
-          bookings: dailyRes.data?.bookings || 24,
-          orders: dailyRes.data?.orders || 67,
-          occupancy: 72,
+          revenue: daily.revenue || 0,
+          bookings: daily.bookings || 0,
+          orders: daily.orders || 0,
+          occupancy: occ.occupancyRate || 0,
         });
+
+        setMonthlyChartData(
+          monthlyRows.map((r) => ({
+            day: r._id,
+            revenue: r.total,
+          }))
+        );
+
+        setOccupancySlices([
+          { name: 'Booked', value: Number(bookedPct.toFixed(1)) },
+          { name: 'Available', value: Number(availablePct.toFixed(1)) },
+        ]);
+
         setRecentBookings(bookingsRes.data?.bookings || []);
+        setLowStockItems(alertsRes.data?.items || []);
       } catch {} finally { setLoading(false); }
     };
     fetchData();
@@ -56,6 +83,19 @@ export default function Dashboard() {
       );
     }
     return null;
+  };
+
+  const timeAgo = (dateValue) => {
+    if (!dateValue) return "";
+    const d = new Date(dateValue);
+    if (Number.isNaN(d.getTime())) return "";
+    const diffMs = Date.now() - d.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   };
 
   return (
@@ -91,7 +131,7 @@ export default function Dashboard() {
             </div>
           </div>
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={mockRevenueData}>
+            <AreaChart data={monthlyChartData}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -112,14 +152,22 @@ export default function Dashboard() {
           <h3 className="font-bold text-lg" style={{ marginBottom: 'var(--space-lg)' }}>Room Status</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={mockOccupancy} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={5} dataKey="value">
-                {mockOccupancy.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+              <Pie
+                data={occupancySlices}
+                cx="50%"
+                cy="50%"
+                innerRadius={55}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {occupancySlices.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
               </Pie>
               <Tooltip formatter={(v) => `${v}%`} />
             </PieChart>
           </ResponsiveContainer>
           <div className="flex flex-col gap-sm" style={{ marginTop: 'var(--space-md)' }}>
-            {mockOccupancy.map((item, i) => (
+            {occupancySlices.map((item, i) => (
               <div key={item.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-sm">
                   <span style={{ width: 10, height: 10, borderRadius: '50%', background: COLORS[i] }} />
@@ -138,26 +186,42 @@ export default function Dashboard() {
         <div className="card">
           <h3 className="font-bold text-lg" style={{ marginBottom: 'var(--space-lg)' }}>Recent Bookings</h3>
           <div className="flex flex-col gap-md">
-            {[
-              { name: 'Rahul Sharma', type: 'Room', room: 'Deluxe-101', status: 'confirmed', time: '2 min ago' },
-              { name: 'Priya Patel', type: 'Table', room: 'T-05', status: 'pending', time: '15 min ago' },
-              { name: 'Amit Kumar', type: 'Room', room: 'Suite-201', status: 'checked_in', time: '1 hr ago' },
-              { name: 'Neha Singh', type: 'Table', room: 'T-12', status: 'confirmed', time: '2 hrs ago' },
-            ].map((b, i) => (
-              <div key={i} className="flex items-center justify-between" style={{ padding: 'var(--space-sm) 0', borderBottom: i < 3 ? '1px solid var(--border-light)' : 'none' }}>
-                <div className="flex items-center gap-md">
-                  <div className="avatar avatar-sm">{b.name.charAt(0)}</div>
-                  <div>
-                    <div className="text-sm font-semibold">{b.name}</div>
-                    <div className="text-xs text-muted">{b.type} · {b.room}</div>
+            {recentBookings.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>No recent bookings</div>
+            ) : (
+              recentBookings.map((b) => {
+                const statusToBadge = {
+                  pending: 'warning',
+                  confirmed: 'success',
+                  checked_in: 'info',
+                  checked_out: 'primary',
+                  cancelled: 'danger',
+                  rejected: 'danger',
+                };
+
+                const name = b.customer?.name || 'Walk-in';
+                const place = b.type === 'room' ? b.room?.roomNumber : b.table?.tableNumber;
+                const time = b.createdAt ? timeAgo(b.createdAt) : '';
+
+                return (
+                  <div key={b._id} className="flex items-center justify-between" style={{ padding: 'var(--space-sm) 0', borderBottom: '1px solid var(--border-light)' }}>
+                    <div className="flex items-center gap-md">
+                      <div className="avatar avatar-sm">{name.charAt(0)}</div>
+                      <div>
+                        <div className="text-sm font-semibold">{name}</div>
+                        <div className="text-xs text-muted">
+                          {b.type === 'room' ? 'Room' : 'Table'} · {place || '—'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`badge badge-${statusToBadge[b.status] || 'info'}`}>{b.status?.replace('_', ' ')}</span>
+                      <div className="text-xs text-muted" style={{ marginTop: 4 }}>{time}</div>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <span className={`badge badge-${b.status === 'confirmed' ? 'success' : b.status === 'pending' ? 'warning' : 'info'}`}>{b.status}</span>
-                  <div className="text-xs text-muted" style={{ marginTop: 4 }}>{b.time}</div>
-                </div>
-              </div>
-            ))}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -182,15 +246,19 @@ export default function Dashboard() {
             <HiOutlineExclamation style={{ display: 'inline', marginRight: 4 }} /> Alerts
           </h4>
           <div className="flex flex-col gap-sm">
-            {[
-              { text: 'Low stock: Tomatoes (2 kg left)', type: 'warning' },
-              { text: '3 rooms need cleaning', type: 'info' },
-              { text: 'New feedback received ★★★★☆', type: 'success' },
-            ].map((alert, i) => (
-              <div key={i} className={`badge badge-${alert.type}`} style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem', width: '100%', justifyContent: 'flex-start' }}>
-                {alert.text}
-              </div>
-            ))}
+            {lowStockItems.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 12, color: 'var(--text-muted)' }}>No low-stock alerts</div>
+            ) : (
+              lowStockItems.slice(0, 3).map((item) => (
+                <div
+                  key={item._id}
+                  className="badge badge-warning"
+                  style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem', width: '100%', justifyContent: 'flex-start' }}
+                >
+                  Low stock: {item.name} ({item.currentStock} {item.unit})
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

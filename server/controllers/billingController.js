@@ -6,6 +6,7 @@ const Coupon = require("../models/Coupon");
 const User = require("../models/User");
 const LoyaltyTransaction = require("../models/LoyaltyTransaction");
 const { generateInvoice } = require("../services/pdfService");
+const { computeRoomBill } = require("../services/billingCalcService");
 
 exports.generate = async (req, res, next) => {
   try {
@@ -23,12 +24,10 @@ exports.generate = async (req, res, next) => {
       type = "restaurant";
     } else if (bookingId) {
       booking = await Booking.findById(bookingId).populate("room customer");
-      const nights = Math.ceil((new Date(booking.checkOut) - new Date(booking.checkIn)) / 86400000);
-      items = [{ name: `Room ${booking.room.roomNumber} (${nights} nights)`,
-        quantity: nights, unitPrice: booking.room.pricePerNight,
-        total: nights * booking.room.pricePerNight }];
-      customer = booking.customer._id;
-      type = "room";
+      const roomBill = computeRoomBill(booking, hotel);
+      items = roomBill.items;
+      customer = roomBill.customerId;
+      type = roomBill.type;
     }
 
     const subtotal = items.reduce((s, i) => s + i.total, 0);
