@@ -52,6 +52,7 @@ import Profile         from './pages/customer/Profile';
 import BookRoom        from './pages/customer/BookRoom';
 import BookTable       from './pages/customer/BookTable';
 import ScanTable       from './pages/customer/ScanTable';
+import Landing         from './pages/public/Landing';
 
 // ────────────────────────────────────────────────────────────────────
 // Role-based home route helper
@@ -69,9 +70,9 @@ const getRoleHome = (role) => {
 
 // ────────────────────────────────────────────────────────────────────
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, isAuthenticated, isLoading } = useAuthStore();
+  const { user, isAuthenticated, isLoading, hasHydrated } = useAuthStore();
 
-  if (isLoading) return (
+  if (!hasHydrated || isLoading) return (
     <div className="loading-screen"><div className="spinner" /></div>
   );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -82,10 +83,10 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 };
 
 // ────────────────────────────────────────────────────────────────────
-// Smart root redirect — sends logged-in users to their home dashboard
-const RootRedirect = () => {
-  const { user, isAuthenticated, isLoading } = useAuthStore();
-  if (isLoading) return <div className="loading-screen"><div className="spinner" /></div>;
+// Smart auth-home redirect — sends logged-in users to their role dashboard
+const AuthHomeRedirect = () => {
+  const { user, isAuthenticated, isLoading, hasHydrated } = useAuthStore();
+  if (!hasHydrated || isLoading) return <div className="loading-screen"><div className="spinner" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <Navigate to={getRoleHome(user?.role)} replace />;
 };
@@ -190,8 +191,11 @@ function App() {
           <Route path="book-table" element={<BookTable />} />
         </Route>
 
-        {/* ── Root: smart redirect based on role ──────────────── */}
-        <Route path="/" element={<RootRedirect />} />
+        {/* ── Public landing ───────────────────────────────────── */}
+        <Route path="/" element={<Landing />} />
+
+        {/* ── Auth home redirect ──────────────────────────────── */}
+        <Route path="/home" element={<AuthHomeRedirect />} />
 
         {/* ── 404 fallback ────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/" replace />} />
