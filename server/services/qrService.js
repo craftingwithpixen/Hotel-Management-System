@@ -1,8 +1,22 @@
 const QRCode = require("qrcode");
 const { cloudinary } = require("../config/cloudinary");
 
+const frontendBase = () => {
+  const raw = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+  const base = raw.replace(/\/+$/, "");
+  if (
+    process.env.NODE_ENV === "production" &&
+    /localhost|127\.0\.0\.1/i.test(base)
+  ) {
+    console.warn(
+      "[qrService] FRONTEND_URL looks like localhost in production — table QR scans will fail on real devices. Set FRONTEND_URL to your Vercel URL on Render and regenerate QRs."
+    );
+  }
+  return base;
+};
+
 const generateTableQR = async (tableId) => {
-  const url = `${process.env.FRONTEND_URL}/scan/table/${tableId}`;
+  const url = `${frontendBase()}/scan/table/${tableId}`;
   const qrUrl = url;
 
   // Design intent: store QR on Cloudinary and return its secure URL.
