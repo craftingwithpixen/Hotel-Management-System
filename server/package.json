@@ -1,7 +1,7 @@
 {
   "name": "hospitalityos-server",
   "version": "1.0.0",
-  "description": "HospitalityOS Backend API",
+  "description": "Grand Paradise Backend API",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

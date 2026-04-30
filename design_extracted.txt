@@ -1,9 +1,9 @@
-HospitalityOS
+Grand Paradise
 Full-Stack System Design & Architecture
 MERN Stack · Tailwind CSS · Razorpay · Cloudinary · Resend · Socket.io
 
 1. Project Overview
-HospitalityOS is a unified hotel and restaurant management platform built on the MERN stack. It covers every operational surface — front desk, kitchen, restaurant floor, inventory, HR, billing, and the customer-facing booking experience — in a single codebase. All features are interconnected through a shared MongoDB database and a real-time Socket.io event bus. Role-based access control gates every route, both on the server and in the React client.
+Grand Paradise is a unified hotel and restaurant management platform built on the MERN stack. It covers every operational surface — front desk, kitchen, restaurant floor, inventory, HR, billing, and the customer-facing booking experience — in a single codebase. All features are interconnected through a shared MongoDB database and a real-time Socket.io event bus. Role-based access control gates every route, both on the server and in the React client.
 1.1 Technology Stack
 
 2. User Roles & Access Control
@@ -365,7 +365,7 @@ const sendOTP = async (email, otp) => {
   await resend.emails.send({
     from: "noreply@yourdomain.com",
     to: email,
-    subject: "Your HospitalityOS verification code",
+    subject: "Your Grand Paradise verification code",
     html: OTPEmailTemplate({ otp }), // React Email component → HTML string
   });
 };
@@ -448,4 +448,4 @@ const generateTableQR = async (tableId) => {
 
 
 End of Document
-HospitalityOS System Design v1.0
+Grand Paradise System Design v1.0

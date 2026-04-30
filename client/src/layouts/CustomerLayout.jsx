@@ -64,7 +64,7 @@ export default function CustomerLayout() {
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}
           >
             <span style={{ fontSize: '1.45rem' }}>🏨</span>
-            <span style={brandGold}>HospitalityOS</span>
+            <span style={brandGold}>Grand Paradise</span>
           </NavLink>
           <button
             type="button"
@@ -164,7 +164,7 @@ export default function CustomerLayout() {
             <HiOutlineMenu />
           </button>
           <span className="font-display font-bold" style={brandGold}>
-            HospitalityOS
+            Grand Paradise
           </span>
           <span style={{ width: 40 }} />
         </header>

@@ -104,7 +104,7 @@ const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
   server.listen(PORT, () => {
-    console.log(`🚀 HospitalityOS server running on port ${PORT}`);
+    console.log(`🚀 Grand Paradise server running on port ${PORT}`);
     startStockAlertJob(io);
   });
 });

@@ -32,7 +32,7 @@ export default function Register() {
         <div className="text-center" style={{ marginBottom: 'var(--space-2xl)' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>🏨</div>
           <h1 className="font-display text-3xl font-bold" style={{ marginBottom: 'var(--space-xs)' }}>Create Account</h1>
-          <p className="text-muted text-sm">Join HospitalityOS today</p>
+          <p className="text-muted text-sm">Join Grand Paradise today</p>
         </div>
 
         <form onSubmit={handleSubmit}>

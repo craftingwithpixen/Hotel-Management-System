@@ -53,7 +53,7 @@ export default function PaymentModal({ billing, onSuccess, onClose }) {
         amount:            order.amount,
         currency:          order.currency,
         order_id:          order.razorpay_order_id,
-        name:              'HospitalityOS',
+        name:              'Grand Paradise',
         description:       `Invoice #${billing._id}`,
         theme:             { color: '#6c63ff' },
         handler: async (response) => {

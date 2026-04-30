@@ -37,10 +37,10 @@ const sendOTP = async (email, otp) => {
   console.log(`📧 [EMAIL LOG] To: ${email} | and  otp is ${otp}`);
   return sendEmail({
     to: email,
-    subject: "Your HospitalityOS verification code",
+    subject: "Your Grand Paradise verification code",
     html: `
       <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #1a1a2e;">HospitalityOS</h2>
+        <h2 style="color: #1a1a2e;">Grand Paradise</h2>
         <p>Your verification code is:</p>
         <div style="background: #f0f0f0; padding: 15px; text-align: center; font-size: 32px; letter-spacing: 8px; font-weight: bold; border-radius: 8px;">${otp}</div>
         <p style="color: #666; font-size: 14px;">This code expires in 10 minutes.</p>
@@ -62,7 +62,7 @@ const sendBookingConfirmation = async (email, booking, invoiceBuffer) => {
         ${booking.checkIn ? `<p><strong>Check-in:</strong> ${new Date(booking.checkIn).toLocaleDateString()}</p>` : ""}
         ${booking.checkOut ? `<p><strong>Check-out:</strong> ${new Date(booking.checkOut).toLocaleDateString()}</p>` : ""}
         ${booking.bookingDate ? `<p><strong>Date:</strong> ${new Date(booking.bookingDate).toLocaleDateString()}</p>` : ""}
-        <p>Thank you for choosing HospitalityOS!</p>
+        <p>Thank you for choosing Grand Paradise!</p>
       </div>
     `,
     ...(invoiceBuffer && {
@@ -78,7 +78,7 @@ const sendLowStockAlert = async (email, items) => {
 
   return sendEmail({
     to: email,
-    subject: "⚠️ Low Stock Alert - HospitalityOS",
+    subject: "⚠️ Low Stock Alert - Grand Paradise",
     html: `
       <div style="font-family: sans-serif;">
         <h2>Low Stock Alert</h2>
@@ -93,7 +93,7 @@ const sendLowStockAlert = async (email, items) => {
 const sendInvoice = async (email, invoiceUrl) => {
   return sendEmail({
     to: email,
-    subject: "Your Invoice - HospitalityOS",
+    subject: "Your Invoice - Grand Paradise",
     html: `
       <div style="font-family: sans-serif;">
         <h2>Invoice Ready</h2>

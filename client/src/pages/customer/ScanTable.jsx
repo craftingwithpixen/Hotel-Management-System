@@ -82,7 +82,7 @@ export default function ScanTable() {
       <div style={{ background: 'var(--gradient-primary)', padding: 'var(--space-xl)', textAlign: 'center', color: '#fff' }}>
         <div style={{ fontSize: '2rem', marginBottom: 4 }}>🍽️</div>
         <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: 4 }}>
-          {tableData?.hotel?.name || 'HospitalityOS'}
+          {tableData?.hotel?.name || 'Grand Paradise'}
         </h1>
         <div style={{ opacity: 0.85, fontSize: '0.875rem' }}>Table {tableData?.tableNumber} · Scan & Order</div>
       </div>

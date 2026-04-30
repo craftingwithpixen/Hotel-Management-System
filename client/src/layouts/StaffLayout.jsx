@@ -70,7 +70,7 @@ export default function StaffLayout() {
             {user?.role === 'chef' ? '👨‍🍳' : user?.role === 'waiter' ? '🍽️' : user?.role === 'receptionist' ? '🏨' : '🏢'}
           </div>
           <div>
-            <h1>HospitalityOS</h1>
+            <h1>Grand Paradise</h1>
             <span className="text-xs text-muted" style={{ textTransform: 'capitalize', WebkitTextFillColor: 'var(--text-tertiary)' }}>
               {user?.role} Portal
             </span>

@@ -38,7 +38,7 @@ export default function AdminLayout() {
             🏨
           </div>
           <div>
-            <h1>HospitalityOS</h1>
+            <h1>Grand Paradise</h1>
             <span className="text-xs text-muted" style={{ WebkitTextFillColor: 'var(--text-tertiary)' }}>Management Suite</span>
           </div>
         </div>

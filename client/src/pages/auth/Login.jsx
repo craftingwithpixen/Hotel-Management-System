@@ -37,7 +37,7 @@ export default function Login() {
       <div className="card-glass animate-slide-up" style={{ width: '100%', maxWidth: 440, padding: 'var(--space-2xl)' }}>
         <div className="text-center" style={{ marginBottom: 'var(--space-2xl)' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>🏨</div>
-          <h1 className="font-display text-3xl font-bold" style={{ marginBottom: 'var(--space-xs)' }}>HospitalityOS</h1>
+          <h1 className="font-display text-3xl font-bold" style={{ marginBottom: 'var(--space-xs)' }}>Grand Paradise</h1>
           <p className="text-muted text-sm">Sign in to your account</p>
         </div>
 

@@ -9,7 +9,7 @@ const generateInvoice = (billing) => {
     doc.on("end", () => resolve(Buffer.concat(buffers)));
 
     // Header
-    doc.fontSize(24).font("Helvetica-Bold").text("HospitalityOS", { align: "center" });
+    doc.fontSize(24).font("Helvetica-Bold").text("Grand Paradise", { align: "center" });
     doc.fontSize(10).font("Helvetica").text("Invoice", { align: "center" });
     doc.moveDown();
 
@@ -70,7 +70,7 @@ const generateInvoice = (billing) => {
     // Footer
     doc.moveDown(2);
     doc.font("Helvetica").fontSize(9).fillColor("#666");
-    doc.text("Thank you for choosing HospitalityOS!", { align: "center" });
+    doc.text("Thank you for choosing Grand Paradise!", { align: "center" });
 
     doc.end();
   });
