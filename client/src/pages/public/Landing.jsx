@@ -270,6 +270,7 @@ export default function Landing() {
             className="card-glass"
             style={{
               maxWidth: 1040,
+              marginRight: 'auto',
               borderColor: 'rgba(255,255,255,0.12)',
               background: 'linear-gradient(120deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
             }}
@@ -331,6 +332,7 @@ export default function Landing() {
           className="card"
           style={{
             maxWidth: 1050,
+            marginLeft: 'auto',
             borderColor: 'rgba(255,255,255,0.12)',
             background: 'linear-gradient(130deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
             overflow: 'hidden',
@@ -369,6 +371,7 @@ export default function Landing() {
         <div
           style={{
             maxWidth: 1040,
+            marginRight: 'auto',
             borderRadius: 24,
             overflow: 'hidden',
             border: '1px solid rgba(210,196,149,0.28)',

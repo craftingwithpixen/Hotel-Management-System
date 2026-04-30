@@ -29,7 +29,7 @@ export default function CustomerLayout() {
 
           <nav className="flex items-center gap-lg hide-mobile">
             <NavLink to="/customer" end className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} style={{ padding: '0.5rem 0.75rem' }}>
-              <HiOutlineHome /> Browse
+              <HiOutlineHome /> Home
             </NavLink>
             <NavLink to="/customer/bookings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} style={{ padding: '0.5rem 0.75rem' }}>
               <HiOutlineCalendar /> Bookings
@@ -65,7 +65,7 @@ export default function CustomerLayout() {
         {/* Mobile menu */}
         {menuOpen && (
           <nav className="flex-col gap-sm animate-slide-up" style={{ padding: 'var(--space-md)', borderTop: '1px solid var(--border)' }}>
-            <NavLink to="/customer" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineHome /> Browse</NavLink>
+            <NavLink to="/customer" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineHome /> Home</NavLink>
             <NavLink to="/customer/bookings" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineCalendar /> Bookings</NavLink>
             <NavLink to="/customer/orders" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineShoppingBag /> Orders</NavLink>
             <NavLink to="/customer/scan" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineCamera /> Scan QR</NavLink>
