@@ -321,8 +321,8 @@ export default function Billing() {
               <button className={`tab ${genType === 'booking' ? 'active' : ''}`} onClick={() => setGenType('booking')}>Room Booking</button>
             </div>
             <div className="input-group mb-lg">
-              <label>{genType === 'order' ? 'Order ID' : 'Booking ID'}</label>
-              <input className="input" placeholder={`Paste ${genType} ID…`} value={genId} onChange={e => setGenId(e.target.value)} />
+              <label>{genType === 'order' ? 'Order Code / ID' : 'Booking Code / ID'}</label>
+              <input className="input" placeholder={genType === 'order' ? 'Paste ORD-XXXXXX or ObjectId' : 'Paste BKG-XXXXXX or ObjectId'} value={genId} onChange={e => setGenId(e.target.value)} />
             </div>
             <div className="flex gap-md">
               <button className="btn btn-outline flex-1" onClick={() => setShowGen(false)}>Cancel</button>

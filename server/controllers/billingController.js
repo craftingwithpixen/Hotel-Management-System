@@ -7,27 +7,40 @@ const User = require("../models/User");
 const LoyaltyTransaction = require("../models/LoyaltyTransaction");
 const { generateInvoice } = require("../services/pdfService");
 const { computeRoomBill } = require("../services/billingCalcService");
+const { Types } = require("mongoose");
 
 exports.generate = async (req, res, next) => {
   try {
     const { orderId, bookingId } = req.body;
     const hotel = await Hotel.findOne();
     let items = [], type = "restaurant", customer, order, booking;
+    let resolvedOrderId = null;
+    let resolvedBookingId = null;
 
     if (orderId) {
-      order = await Order.findById(orderId).populate("items.menuItem customer");
+      order = Types.ObjectId.isValid(orderId)
+        ? await Order.findById(orderId).populate("items.menuItem customer")
+        : await Order.findOne({ orderCode: String(orderId).trim().toUpperCase() }).populate("items.menuItem customer");
+      if (!order) return res.status(404).json({ message: "Order not found" });
       items = order.items.map(i => ({
         name: i.menuItem.name, quantity: i.quantity,
         unitPrice: i.price, total: i.price * i.quantity,
       }));
       customer = order.customer || req.body.customerId;
       type = "restaurant";
+      resolvedOrderId = order._id;
     } else if (bookingId) {
-      booking = await Booking.findById(bookingId).populate("room customer");
+      booking = Types.ObjectId.isValid(bookingId)
+        ? await Booking.findById(bookingId).populate("room customer")
+        : await Booking.findOne({ bookingCode: String(bookingId).trim().toUpperCase() }).populate("room customer");
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
       const roomBill = computeRoomBill(booking, hotel);
       items = roomBill.items;
       customer = roomBill.customerId;
       type = roomBill.type;
+      resolvedBookingId = booking._id;
+    } else {
+      return res.status(400).json({ message: "orderId or bookingId is required" });
     }
 
     const subtotal = items.reduce((s, i) => s + i.total, 0);
@@ -36,12 +49,12 @@ exports.generate = async (req, res, next) => {
     const total = subtotal + gstAmount;
 
     const bill = await Billing.create({
-      hotel: hotel?._id, type, order: orderId, booking: bookingId,
+      hotel: hotel?._id, type, order: resolvedOrderId, booking: resolvedBookingId,
       customer, items, subtotal, gstRate, gstAmount, total,
       generatedBy: req.user._id,
     });
-    if (orderId) await Order.findByIdAndUpdate(orderId, { billing: bill._id, overallStatus: "billed" });
-    if (bookingId) await Booking.findByIdAndUpdate(bookingId, { billing: bill._id });
+    if (resolvedOrderId) await Order.findByIdAndUpdate(resolvedOrderId, { billing: bill._id, overallStatus: "billed" });
+    if (resolvedBookingId) await Booking.findByIdAndUpdate(resolvedBookingId, { billing: bill._id });
 
     res.status(201).json({ billing: bill });
   } catch (error) { next(error); }

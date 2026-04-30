@@ -65,6 +65,16 @@ export default function Bookings() {
     }
   };
 
+  const copyBookingCode = async (code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success(`Copied ${code}`);
+    } catch {
+      toast.error('Failed to copy booking code');
+    }
+  };
+
   const filtered = bookings.filter(b =>
     (!filter.type || b.type === filter.type) && (!filter.status || b.status === filter.status) &&
     (!search || b.customer?.name?.toLowerCase().includes(search.toLowerCase()))
@@ -92,12 +102,17 @@ export default function Bookings() {
         {loading && <div style={{ padding: 'var(--space-lg)' }}>Loading bookings...</div>}
         <table className="data-table">
           <thead><tr>
-            <th>Guest</th><th>Type</th><th>Room/Table</th><th>Date</th><th>Guests</th><th>Status</th><th>Actions</th>
+            <th>Guest</th><th>Booking ID</th><th>Type</th><th>Room/Table</th><th>Date</th><th>Guests</th><th>Status</th><th>Actions</th>
           </tr></thead>
           <tbody>
             {filtered.map(b => (
               <tr key={b._id}>
                 <td><div className="flex items-center gap-sm"><div className="avatar avatar-sm">{b.customer?.name?.charAt(0) || 'G'}</div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>{b.customer?.name || 'Guest'}</span></div></td>
+                <td>
+                  <button className="btn btn-ghost btn-sm" onClick={() => copyBookingCode(b.bookingCode)} title="Copy booking code">
+                    {b.bookingCode || 'BKG-—'}
+                  </button>
+                </td>
                 <td><span className={`badge badge-${b.type === 'room' ? 'primary' : 'info'}`}>{b.type}</span></td>
                 <td className="font-medium" style={{ color: 'var(--text-primary)' }}>{b.room?.roomNumber || b.table?.tableNumber}</td>
                 <td>
