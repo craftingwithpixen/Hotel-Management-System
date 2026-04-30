@@ -7,6 +7,15 @@ const Payment = require("../models/Payment");
 const { computeRoomBill } = require("../services/billingCalcService");
 const { emitNewBooking, emitBookingCancelled } = require("../services/socketService");
 const { refundPayment } = require("./paymentController");
+const { Types } = require("mongoose");
+
+const ensureValidBookingId = (id, res) => {
+  if (!Types.ObjectId.isValid(id)) {
+    res.status(400).json({ message: "Invalid booking id" });
+    return false;
+  }
+  return true;
+};
 
 exports.createRoomBooking = async (req, res, next) => {
   try {
@@ -72,6 +81,7 @@ exports.list = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findById(req.params.id)
       .populate("customer room table payment billing");
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -81,6 +91,7 @@ exports.getById = async (req, res, next) => {
 
 exports.confirm = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (booking.status !== "pending") {
@@ -95,7 +106,9 @@ exports.confirm = async (req, res, next) => {
 
 exports.checkIn = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findByIdAndUpdate(req.params.id, { status: "checked_in" }, { new: true });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "booked" });
     if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "occupied" });
     res.json({ booking });
@@ -104,6 +117,7 @@ exports.checkIn = async (req, res, next) => {
 
 exports.checkOut = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findById(req.params.id).populate("room customer");
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
@@ -142,6 +156,7 @@ exports.checkOut = async (req, res, next) => {
 
 exports.cancel = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
@@ -184,6 +199,7 @@ exports.cancel = async (req, res, next) => {
 
 exports.reject = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (booking.status !== "pending") {
