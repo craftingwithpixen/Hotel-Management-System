@@ -16,11 +16,11 @@ export default function ManagerDashboard() {
       api.get('/rooms').catch(() => ({ data: { rooms: [] } })),
       api.get('/tables').catch(() => ({ data: { tables: [] } })),
       api.get('/inventory?lowStock=true').catch(() => ({ data: { items: [] } })),
-      api.get('/menu').catch(() => ({ data: { menuItems: [] } })),
+      api.get('/menu').catch(() => ({ data: { items: [] } })),
     ]).then(([roomsRes, tablesRes, invRes, menuRes]) => {
       const rooms  = roomsRes.data.rooms   || [];
       const tables = tablesRes.data.tables || [];
-      const menu   = menuRes.data.menuItems || [];
+      const menu   = menuRes.data.items || menuRes.data.menuItems || [];
       setLowStock(invRes.data.items || []);
       setStats({
         totalRooms:     rooms.length,

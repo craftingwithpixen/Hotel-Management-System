@@ -18,10 +18,20 @@ export default function OrderPad() {
   useEffect(() => {
     Promise.all([
       api.get('/tables'),
-      api.get('/menu?available=true'),
+      api.get('/menu'),
     ]).then(([tRes, mRes]) => {
       setTables(tRes.data.tables || []);
-      setMenu(mRes.data.menuItems || []);
+      // Normalize menu payload from backend and keep only available, non-deleted items.
+      const rawMenu = Array.isArray(mRes.data?.items)
+        ? mRes.data.items
+        : Array.isArray(mRes.data?.menuItems)
+          ? mRes.data.menuItems
+          : [];
+      const availableMenu = rawMenu.filter((item) => item && item.isDeleted !== true && item.isAvailable !== false);
+      setMenu(availableMenu);
+      if (availableMenu.length === 0) {
+        toast('No available menu items found in DB');
+      }
     }).catch(() => toast.error('Failed to load data'))
       .finally(() => setLoading(false));
   }, []);
@@ -30,7 +40,7 @@ export default function OrderPad() {
 
   const filtered = menu.filter(item => {
     const matchCat = category === 'all' || item.category === category;
-    const matchSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (item.name || '').toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
@@ -110,25 +120,33 @@ export default function OrderPad() {
 
         {/* Menu Items Grid */}
         <div style={{ overflowY: 'auto', flex: 1 }}>
-          <div className="grid grid-3 gap-md">
-            {filtered.map(item => (
-              <button
-                key={item._id}
-                onClick={() => addToCart(item)}
-                className="card card-hover"
-                style={{ textAlign: 'left', cursor: 'pointer', padding: 'var(--space-md)', border: '1px solid var(--border)', transition: 'all 0.2s' }}
-              >
-                {item.image && <img src={item.image} alt={item.name} style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-sm)' }} />}
-                <div className="font-semibold text-sm" style={{ marginBottom: 2 }}>{item.name}</div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span className="text-sm font-bold" style={{ color: 'var(--primary)' }}>₹{item.price}</span>
-                  <span className={`badge ${item.category === 'veg' ? 'badge-success' : item.category === 'non_veg' ? 'badge-danger' : 'badge-info'}`} style={{ fontSize: '0.65rem' }}>
-                    {item.category}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+          {filtered.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 'var(--space-xl)' }}>
+              {menu.length === 0
+                ? 'No menu items available in database.'
+                : 'No items match your search/filter.'}
+            </div>
+          ) : (
+            <div className="grid grid-3 gap-md">
+              {filtered.map(item => (
+                <button
+                  key={item._id}
+                  onClick={() => addToCart(item)}
+                  className="card card-hover"
+                  style={{ textAlign: 'left', cursor: 'pointer', padding: 'var(--space-md)', border: '1px solid var(--border)', transition: 'all 0.2s' }}
+                >
+                  {item.image && <img src={item.image} alt={item.name} style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-sm)' }} />}
+                  <div className="font-semibold text-sm" style={{ marginBottom: 2 }}>{item.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span className="text-sm font-bold" style={{ color: 'var(--primary)' }}>₹{item.price}</span>
+                    <span className={`badge ${item.category === 'veg' ? 'badge-success' : item.category === 'non_veg' ? 'badge-danger' : 'badge-info'}`} style={{ fontSize: '0.65rem' }}>
+                      {item.category}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
