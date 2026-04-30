@@ -74,7 +74,11 @@ export default function OrderPad() {
       setCart([]);
       setSelTable(null);
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to place order');
+      const status = err?.response?.status;
+      const message = err?.response?.data?.message || err?.message || 'Failed to place order';
+      toast.error(status ? `(${status}) ${message}` : message);
+      // Helpful for debugging API payload/response mismatches.
+      console.error('Order submit failed:', err?.response?.data || err);
     } finally { setSubmitting(false); }
   };
 
@@ -201,11 +205,13 @@ export default function OrderPad() {
           <button
             className="btn btn-primary w-full"
             onClick={submitOrder}
-            disabled={submitting || cart.length === 0 || !selTable}
+            disabled={submitting}
           >
             <HiOutlinePrinter />
             {submitting ? 'Sending...' : 'Send to Kitchen'}
           </button>
+          {!selTable && <div className="text-xs text-muted" style={{ marginTop: 8 }}>Select a table to send order.</div>}
+          {cart.length === 0 && <div className="text-xs text-muted" style={{ marginTop: 4 }}>Add items to cart before sending.</div>}
         </div>
       </div>
     </div>
