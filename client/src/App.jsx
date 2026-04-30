@@ -52,6 +52,7 @@ import Profile         from './pages/customer/Profile';
 import BookRoom        from './pages/customer/BookRoom';
 import BookTable       from './pages/customer/BookTable';
 import ScanTable       from './pages/customer/ScanTable';
+import ScanQr          from './pages/customer/ScanQr';
 import Landing         from './pages/public/Landing';
 
 // ────────────────────────────────────────────────────────────────────
@@ -185,6 +186,7 @@ function App() {
           <Route index             element={<Browse />} />
           <Route path="bookings"   element={<BookingsCustomer />} />
           <Route path="orders"     element={<OrdersCustomer />} />
+          <Route path="scan"       element={<ScanQr />} />
           <Route path="loyalty"    element={<Loyalty />} />
           <Route path="profile"    element={<Profile />} />
           <Route path="book-room"  element={<BookRoom />} />

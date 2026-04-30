@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineHome, HiOutlineShoppingBag, HiOutlineCalendar, HiOutlineHeart, HiOutlineStar, HiOutlineLogout, HiOutlineUser, HiOutlineMenu } from 'react-icons/hi';
+import { HiOutlineHome, HiOutlineShoppingBag, HiOutlineCalendar, HiOutlineHeart, HiOutlineStar, HiOutlineLogout, HiOutlineUser, HiOutlineMenu, HiOutlineCamera } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
 
@@ -37,6 +37,9 @@ export default function CustomerLayout() {
             <NavLink to="/customer/orders" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} style={{ padding: '0.5rem 0.75rem' }}>
               <HiOutlineShoppingBag /> Orders
             </NavLink>
+            <NavLink to="/customer/scan" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} style={{ padding: '0.5rem 0.75rem' }}>
+              <HiOutlineCamera /> Scan QR
+            </NavLink>
             <NavLink to="/customer/loyalty" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} style={{ padding: '0.5rem 0.75rem' }}>
               <HiOutlineHeart /> Loyalty
             </NavLink>
@@ -65,6 +68,7 @@ export default function CustomerLayout() {
             <NavLink to="/customer" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineHome /> Browse</NavLink>
             <NavLink to="/customer/bookings" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineCalendar /> Bookings</NavLink>
             <NavLink to="/customer/orders" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineShoppingBag /> Orders</NavLink>
+            <NavLink to="/customer/scan" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineCamera /> Scan QR</NavLink>
             <NavLink to="/customer/loyalty" onClick={() => setMenuOpen(false)} className="sidebar-link"><HiOutlineHeart /> Loyalty</NavLink>
           </nav>
         )}

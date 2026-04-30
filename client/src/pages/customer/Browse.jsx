@@ -19,7 +19,7 @@ export default function Browse() {
         
         <div className="flex justify-center gap-md">
           <Link to="/customer/book-room" className="btn btn-primary btn-lg">Book a Stay <HiOutlineArrowRight /></Link>
-          <button className="btn btn-outline btn-lg">View Menu</button>
+          <Link to="/customer/scan" className="btn btn-outline btn-lg">Scan QR</Link>
         </div>
       </section>
 
