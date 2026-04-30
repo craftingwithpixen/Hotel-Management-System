@@ -1,4 +1,5 @@
 const Hotel = require("../models/Hotel");
+const { getSignedUploadParams } = require("../config/cloudinary");
 
 exports.getHotel = async (req, res, next) => {
   try {
@@ -52,3 +53,12 @@ exports.toggleAvailability = async (req, res, next) => {
     res.json({ hotel });
   } catch (error) { next(error); }
 };
+
+// GET /hotel/cloudinary-sign?folder=<folder>
+// Returns server-signed upload params for direct Cloudinary uploads from the browser
+exports.getCloudinarySign = (req, res) => {
+  const { folder = "uploads" } = req.query;
+  const params = getSignedUploadParams(folder);
+  res.json(params);
+};
+

@@ -1,0 +1,212 @@
+{
+  "common": {
+    "loading": "लोड होत आहे...",
+    "save": "जतन करा",
+    "cancel": "रद्द करा",
+    "delete": "हटवा",
+    "edit": "संपादित करा",
+    "add": "जोडा",
+    "search": "शोधा",
+    "filter": "फिल्टर",
+    "submit": "सबमिट करा",
+    "close": "बंद करा",
+    "confirm": "पुष्टी करा",
+    "back": "मागे",
+    "next": "पुढे",
+    "yes": "होय",
+    "no": "नाही",
+    "actions": "क्रिया",
+    "status": "स्थिती",
+    "date": "तारीख",
+    "time": "वेळ",
+    "total": "एकूण",
+    "name": "नाव",
+    "email": "ईमेल",
+    "phone": "फोन",
+    "address": "पत्ता",
+    "price": "किंमत",
+    "quantity": "प्रमाण",
+    "notes": "नोंदी",
+    "description": "वर्णन",
+    "type": "प्रकार",
+    "role": "भूमिका",
+    "amount": "रक्कम"
+  },
+  "nav": {
+    "dashboard": "डॅशबोर्ड",
+    "rooms": "खोल्या",
+    "tables": "टेबल",
+    "bookings": "बुकिंग",
+    "orders": "ऑर्डर",
+    "menu": "मेनू",
+    "staff": "कर्मचारी",
+    "inventory": "साठा",
+    "billing": "बिलिंग",
+    "reports": "अहवाल",
+    "settings": "सेटिंग्ज",
+    "logout": "बाहेर पडा",
+    "profile": "प्रोफाइल",
+    "loyalty": "लॉयल्टी पॉइंट्स",
+    "kitchenBoard": "किचन बोर्ड",
+    "orderPad": "ऑर्डर पॅड",
+    "orderHistory": "ऑर्डर इतिहास",
+    "checkIn": "चेक इन / आउट",
+    "hotelSettings": "हॉटेल सेटिंग्ज"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "register": "नोंदणी",
+    "email": "ईमेल पत्ता",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड पुष्टी करा",
+    "fullName": "पूर्ण नाव",
+    "phone": "फोन नंबर",
+    "loginBtn": "साइन इन",
+    "registerBtn": "खाते तयार करा",
+    "staffLogin": "कर्मचारी लॉगिन",
+    "customerLogin": "ग्राहक लॉगिन",
+    "forgotPassword": "पासवर्ड विसरलात?",
+    "otpSent": "OTP तुमच्या ईमेलवर पाठवला",
+    "enterOtp": "OTP प्रविष्ट करा",
+    "verifyOtp": "OTP सत्यापित करा",
+    "resendOtp": "OTP पुन्हा पाठवा",
+    "noAccount": "खाते नाही?",
+    "haveAccount": "आधीच खाते आहे?"
+  },
+  "dashboard": {
+    "welcome": "पुन्हा स्वागत",
+    "todayRevenue": "आजचा महसूल",
+    "totalBookings": "एकूण बुकिंग",
+    "activeOrders": "सक्रिय ऑर्डर",
+    "roomOccupancy": "खोली अधिग्रहण",
+    "recentBookings": "अलीकडील बुकिंग",
+    "quickActions": "जलद क्रिया",
+    "alerts": "सूचना",
+    "revenueOverview": "महसूल आढावा",
+    "roomStatus": "खोलीची स्थिती",
+    "newBooking": "नवीन बुकिंग",
+    "addOrder": "ऑर्डर जोडा",
+    "checkIn": "चेक इन",
+    "generateBill": "बिल तयार करा"
+  },
+  "booking": {
+    "roomBooking": "खोली बुकिंग",
+    "tableBooking": "टेबल बुकिंग",
+    "checkIn": "चेक इन",
+    "checkOut": "चेक आउट",
+    "guestCount": "अतिथी संख्या",
+    "specialRequests": "विशेष विनंत्या",
+    "bookingDate": "बुकिंग तारीख",
+    "timeSlot": "वेळ स्लॉट",
+    "status": {
+      "pending": "प्रतीक्षेत",
+      "confirmed": "पुष्टी केली",
+      "checked_in": "चेक इन",
+      "checked_out": "चेक आउट",
+      "cancelled": "रद्द",
+      "rejected": "नाकारले"
+    }
+  },
+  "order": {
+    "newOrder": "नवीन ऑर्डर",
+    "tableNumber": "टेबल नंबर",
+    "items": "वस्तू",
+    "addItem": "वस्तू जोडा",
+    "removeItem": "वस्तू काढा",
+    "printKOT": "KOT प्रिंट करा",
+    "status": {
+      "pending": "प्रतीक्षेत",
+      "preparing": "तयार होत आहे",
+      "ready": "तयार",
+      "served": "दिले",
+      "billed": "बिल केले"
+    }
+  },
+  "billing": {
+    "generateBill": "बिल तयार करा",
+    "subtotal": "उपएकूण",
+    "gst": "GST",
+    "discount": "सूट",
+    "loyaltyPoints": "लॉयल्टी पॉइंट्स",
+    "total": "एकूण",
+    "splitBill": "बिल विभाजित करा",
+    "applyCoupon": "कूपन लागू करा",
+    "payNow": "आता पैसे द्या",
+    "cashPayment": "रोख पेमेंट",
+    "downloadInvoice": "चलन डाउनलोड करा",
+    "status": {
+      "draft": "मसुदा",
+      "finalized": "अंतिम",
+      "paid": "दिले"
+    }
+  },
+  "room": {
+    "roomNumber": "खोली क्रमांक",
+    "type": "खोलीचा प्रकार",
+    "pricePerNight": "किंमत / रात्र",
+    "capacity": "क्षमता",
+    "floor": "मजला",
+    "amenities": "सुविधा",
+    "cleaningStatus": "सफाई स्थिती",
+    "status": {
+      "available": "उपलब्ध",
+      "booked": "बुक केले",
+      "maintenance": "देखभाल"
+    },
+    "cleaning": {
+      "clean": "स्वच्छ",
+      "dirty": "घाण",
+      "in_progress": "चालू आहे"
+    },
+    "types": {
+      "single": "सिंगल",
+      "double": "डबल",
+      "deluxe": "डिलक्स",
+      "suite": "सुइट"
+    }
+  },
+  "inventory": {
+    "itemName": "वस्तूचे नाव",
+    "unit": "एकक",
+    "currentStock": "सध्याचा साठा",
+    "threshold": "कमी साठ्याची मर्यादा",
+    "category": "श्रेणी",
+    "supplier": "पुरवठादार",
+    "restock": "पुनर्भरण",
+    "consume": "वापर नोंदवा",
+    "lowStockAlert": "कमी साठ्याची सूचना"
+  },
+  "staff": {
+    "employeeId": "कर्मचारी ओळखपत्र",
+    "department": "विभाग",
+    "salary": "मासिक पगार",
+    "joiningDate": "रुजू तारीख",
+    "attendance": "उपस्थिती",
+    "markAttendance": "उपस्थिती नोंदवा",
+    "salarySlip": "वेतन चिठ्ठी",
+    "present": "उपस्थित",
+    "absent": "अनुपस्थित"
+  },
+  "customer": {
+    "myBookings": "माझ्या बुकिंग",
+    "myOrders": "माझ्या ऑर्डर",
+    "myBills": "माझी बिले",
+    "loyaltyPoints": "लॉयल्टी पॉइंट्स",
+    "submitFeedback": "अभिप्राय द्या",
+    "submitComplaint": "तक्रार नोंदवा",
+    "scanTable": "टेबल QR स्कॅन करा",
+    "browseMenu": "मेनू पहा",
+    "bookRoom": "खोली बुक करा"
+  },
+  "feedback": {
+    "rating": "रेटिंग",
+    "comment": "टिप्पणी",
+    "category": {
+      "room": "खोली",
+      "food": "अन्न",
+      "service": "सेवा",
+      "overall": "एकूण"
+    },
+    "thankYou": "आपल्या अभिप्रायाबद्दल धन्यवाद!"
+  }
+}

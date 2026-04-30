@@ -438,6 +438,8 @@ select.input {
 /* Main Content */
 .main-content {
   margin-left: 260px;
+  flex: 1;
+  min-width: 0;
   min-height: 100vh;
   padding: var(--space-xl);
 }

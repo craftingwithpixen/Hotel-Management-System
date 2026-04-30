@@ -88,6 +88,9 @@ export default function AdminLayout() {
               <HiOutlineBell style={{ fontSize: '1.25rem' }} />
               <span style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, background: 'var(--danger)', borderRadius: '50%' }} />
             </button>
+            <button className="btn btn-outline btn-sm" onClick={handleLogout}>
+              <HiOutlineLogout /> Logout
+            </button>
           </div>
         </div>
         <Outlet />

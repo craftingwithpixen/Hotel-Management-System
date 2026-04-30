@@ -1,7 +1,21 @@
 const Booking = require("../models/Booking");
 const Room = require("../models/Room");
 const Table = require("../models/Table");
+const Hotel = require("../models/Hotel");
+const Billing = require("../models/Billing");
+const Payment = require("../models/Payment");
+const { computeRoomBill } = require("../services/billingCalcService");
 const { emitNewBooking, emitBookingCancelled } = require("../services/socketService");
+const { refundPayment } = require("./paymentController");
+const { Types } = require("mongoose");
+
+const ensureValidBookingId = (id, res) => {
+  if (!Types.ObjectId.isValid(id)) {
+    res.status(400).json({ message: "Invalid booking id" });
+    return false;
+  }
+  return true;
+};
 
 exports.createRoomBooking = async (req, res, next) => {
   try {
@@ -67,6 +81,7 @@ exports.list = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findById(req.params.id)
       .populate("customer room table payment billing");
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -76,14 +91,24 @@ exports.getById = async (req, res, next) => {
 
 exports.confirm = async (req, res, next) => {
   try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, { status: "confirmed" }, { new: true });
+    if (!ensureValidBookingId(req.params.id, res)) return;
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (booking.status !== "pending") {
+      return res.status(400).json({ message: "Only pending bookings can be approved" });
+    }
+
+    booking.status = "confirmed";
+    await booking.save();
     res.json({ booking });
   } catch (error) { next(error); }
 };
 
 exports.checkIn = async (req, res, next) => {
   try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
     const booking = await Booking.findByIdAndUpdate(req.params.id, { status: "checked_in" }, { new: true });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
     if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "booked" });
     if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "occupied" });
     res.json({ booking });
@@ -92,18 +117,100 @@ exports.checkIn = async (req, res, next) => {
 
 exports.checkOut = async (req, res, next) => {
   try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, { status: "checked_out" }, { new: true });
-    if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "available", cleaningStatus: "dirty" });
+    if (!ensureValidBookingId(req.params.id, res)) return;
+    const booking = await Booking.findById(req.params.id).populate("room customer");
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    booking.status = "checked_out";
+    await booking.save();
+
+    if (booking.room) {
+      await Room.findByIdAndUpdate(booking.room._id, { status: "available", cleaningStatus: "dirty" });
+    }
     if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "available" });
+
+    // Auto-create a draft room billing record on checkout.
+    if (booking.type === "room" && booking.room && !booking.billing) {
+      const hotel = await Hotel.findOne();
+      const roomBill = computeRoomBill(booking, hotel);
+      const bill = await Billing.create({
+        hotel: hotel?._id,
+        type: "room",
+        booking: booking._id,
+        customer: roomBill.customerId,
+        items: roomBill.items,
+        subtotal: roomBill.subtotal,
+        gstRate: roomBill.gstRate,
+        gstAmount: roomBill.gstAmount,
+        total: roomBill.total,
+        generatedBy: req.user._id,
+      });
+
+      booking.billing = bill._id;
+      await booking.save();
+    }
+
     res.json({ booking });
   } catch (error) { next(error); }
 };
 
 exports.cancel = async (req, res, next) => {
   try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, {
-      status: "cancelled", cancellationReason: req.body.reason, cancelledAt: new Date(),
-    }, { new: true });
+    if (!ensureValidBookingId(req.params.id, res)) return;
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    const isPrivileged = ["admin", "manager", "receptionist"].includes(req.user.role);
+    const isOwner = booking.customer?.toString() === req.user._id?.toString();
+    if (!isPrivileged && !isOwner) {
+      return res.status(403).json({ message: "Not allowed to cancel this booking" });
+    }
+
+    booking.status = "cancelled";
+    booking.cancellationReason = req.body.reason || "Cancelled";
+    booking.cancelledAt = new Date();
+    await booking.save();
+
+    // Refund payment if this booking was already paid (Razorpay capture).
+    try {
+      let paymentId = booking.payment;
+      if (!paymentId && booking.billing) {
+        const bill = await Billing.findById(booking.billing).populate("payment");
+        paymentId = bill?.payment?._id;
+      }
+
+      if (paymentId) {
+        const payment = await Payment.findById(paymentId);
+        if (payment?.status === "captured" && payment?.razorpayPaymentId) {
+          await refundPayment(paymentId);
+        }
+      }
+    } catch (e) {
+      // Cancellation should still succeed even if refund fails.
+      console.error("Booking cancellation refund error:", e?.message || e);
+    }
+
+    if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "available" });
+    if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "available" });
+    if (req.app.get("io")) emitBookingCancelled(req.app.get("io"), booking);
+    res.json({ booking });
+  } catch (error) { next(error); }
+};
+
+exports.reject = async (req, res, next) => {
+  try {
+    if (!ensureValidBookingId(req.params.id, res)) return;
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+    if (booking.status !== "pending") {
+      return res.status(400).json({ message: "Only pending bookings can be rejected" });
+    }
+
+    booking.status = "rejected";
+    booking.cancellationReason = req.body.reason || "Rejected by admin";
+    booking.cancelledAt = new Date();
+    await booking.save();
+
     if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "available" });
     if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "available" });
     if (req.app.get("io")) emitBookingCancelled(req.app.get("io"), booking);

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
+    orderCode: { type: String, unique: true, index: true },
     hotel: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true },
     table: { type: mongoose.Schema.Types.ObjectId, ref: "Table", required: true },
     booking: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" },
@@ -32,6 +33,13 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+orderSchema.pre("validate", function () {
+  if (!this.orderCode) {
+    const idPart = this._id ? this._id.toString().slice(-6).toUpperCase() : Date.now().toString().slice(-6);
+    this.orderCode = `ORD-${idPart}`;
+  }
+});
 
 orderSchema.index({ table: 1, overallStatus: 1 });
 orderSchema.index({ hotel: 1, createdAt: -1 });
