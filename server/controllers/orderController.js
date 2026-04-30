@@ -1,11 +1,25 @@
 const Order = require("../models/Order");
 const Table = require("../models/Table");
 const MenuItem = require("../models/MenuItem");
+const Hotel = require("../models/Hotel");
 const { emitNewOrder, emitOrderUpdate, emitItemUpdate } = require("../services/socketService");
 
 exports.create = async (req, res, next) => {
   try {
     const { tableId, items, hotelId } = req.body;
+    const table = await Table.findById(tableId).select("hotel status");
+    if (!table) return res.status(404).json({ message: "Table not found" });
+
+    // Resolve hotel safely even when client does not send hotelId.
+    let resolvedHotelId = hotelId || table.hotel;
+    if (!resolvedHotelId) {
+      const defaultHotel = await Hotel.findOne().select("_id");
+      resolvedHotelId = defaultHotel?._id;
+    }
+    if (!resolvedHotelId) {
+      return res.status(400).json({ message: "Hotel setup is required before creating orders" });
+    }
+
     const orderItems = [];
     for (const item of items) {
       const menuItem = await MenuItem.findById(item.menuItemId);
@@ -16,7 +30,7 @@ exports.create = async (req, res, next) => {
       });
     }
     const order = await Order.create({
-      hotel: hotelId, table: tableId, waiter: req.user._id,
+      hotel: resolvedHotelId, table: tableId, waiter: req.user._id,
       items: orderItems, isQROrder: req.body.isQROrder || false,
       customer: req.body.customerId,
     });
