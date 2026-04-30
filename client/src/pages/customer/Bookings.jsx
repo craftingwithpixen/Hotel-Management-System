@@ -41,6 +41,16 @@ export default function Bookings() {
     }
   };
 
+  const copyBookingCode = async (code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success(`Copied ${code}`);
+    } catch {
+      toast.error('Failed to copy booking code');
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="card" style={{ textAlign: 'center' }}>
@@ -78,6 +88,12 @@ export default function Bookings() {
                   </h3>
                   <span className="badge">{booking.status || 'pending'}</span>
                 </div>
+                <p className="text-sm text-muted">
+                  Booking ID:{' '}
+                  <button className="btn btn-ghost btn-sm" onClick={() => copyBookingCode(booking.bookingCode)}>
+                    {booking.bookingCode || 'BKG-—'}
+                  </button>
+                </p>
                 <p className="text-sm text-muted">
                   Type: <span style={{ textTransform: 'capitalize' }}>{booking.type}</span>
                 </p>

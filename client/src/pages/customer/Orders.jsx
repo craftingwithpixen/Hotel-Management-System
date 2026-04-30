@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import toast from 'react-hot-toast';
 
 export default function Orders() {
   const { isAuthenticated } = useAuthStore();
@@ -28,6 +29,16 @@ export default function Orders() {
 
     loadOrders();
   }, [isAuthenticated]);
+
+  const copyOrderCode = async (code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success(`Copied ${code}`);
+    } catch {
+      toast.error('Failed to copy order code');
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -59,9 +70,15 @@ export default function Orders() {
             orders.map((order) => (
               <div key={order._id} className="card">
                 <div className="flex justify-between items-center mb-sm">
-                  <h3 className="font-bold">Order #{order.orderNo || order._id.slice(-6)}</h3>
+                  <h3 className="font-bold">Order {order.orderCode || `#${order.orderNo || order._id.slice(-6)}`}</h3>
                   <span className="badge">{order.status || 'placed'}</span>
                 </div>
+                <p className="text-sm text-muted mb-sm">
+                  Order ID:{' '}
+                  <button className="btn btn-ghost btn-sm" onClick={() => copyOrderCode(order.orderCode)}>
+                    {order.orderCode || 'ORD-—'}
+                  </button>
+                </p>
                 <p className="text-sm text-muted mb-sm">Items: {order.items?.length || 0}</p>
                 <p className="text-sm">
                   Total: <strong>₹{order.totalAmount || 0}</strong>

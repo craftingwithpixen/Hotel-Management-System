@@ -57,6 +57,16 @@ export default function Orders() {
     }
   };
 
+  const copyOrderCode = async (code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success(`Copied ${code}`);
+    } catch {
+      toast.error('Failed to copy order code');
+    }
+  };
+
   return (
     <div className="animate-fade">
       <div className="page-header">
@@ -90,6 +100,14 @@ export default function Orders() {
                   <div>
                     <div className="font-bold text-lg">{order.table?.tableNumber || '—'}</div>
                     <div className="text-xs text-muted">by {order.waiter?.name || '—'} · {timeAgo(order.createdAt)}</div>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ marginTop: 6, padding: 0, minHeight: 'auto' }}
+                      onClick={() => copyOrderCode(order.orderCode)}
+                      title="Copy order code"
+                    >
+                      {order.orderCode || 'ORD-—'}
+                    </button>
                   </div>
                 </div>
                 <span className="badge" style={{ background: `${(statusColors[order.overallStatus] || '#64748b')}20`, color: statusColors[order.overallStatus] || '#64748b' }}>

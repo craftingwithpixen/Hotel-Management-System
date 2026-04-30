@@ -83,6 +83,16 @@ export default function ReceptionistBookings() {
     finally { setSaving(false); }
   };
 
+  const copyBookingCode = async (code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success(`Copied ${code}`);
+    } catch {
+      toast.error('Failed to copy booking code');
+    }
+  };
+
   return (
     <div className="animate-fade">
       <div className="page-header">
@@ -128,11 +138,11 @@ export default function ReceptionistBookings() {
         ) : (
           <table className="data-table">
             <thead>
-              <tr><th>Guest</th><th>Type</th><th>Room / Table</th><th>Dates / Slot</th><th>Guests</th><th>Status</th><th>Actions</th></tr>
+              <tr><th>Guest</th><th>Booking ID</th><th>Type</th><th>Room / Table</th><th>Dates / Slot</th><th>Guests</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No bookings found</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No bookings found</td></tr>
               )}
               {filtered.map(b => (
                 <tr key={b._id}>
@@ -144,6 +154,11 @@ export default function ReceptionistBookings() {
                         <div className="text-xs text-muted">{b.customer?.phone}</div>
                       </div>
                     </div>
+                  </td>
+                  <td>
+                    <button className="btn btn-ghost btn-sm" onClick={() => copyBookingCode(b.bookingCode)} title="Copy booking code">
+                      {b.bookingCode || 'BKG-—'}
+                    </button>
                   </td>
                   <td><span className={`badge badge-${b.type === 'room' ? 'primary' : 'accent'}`} style={{ textTransform: 'capitalize' }}>{b.type}</span></td>
                   <td className="font-bold" style={{ color: 'var(--primary)' }}>
