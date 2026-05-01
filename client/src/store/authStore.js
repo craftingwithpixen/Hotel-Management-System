@@ -10,9 +10,22 @@ const useAuthStore = create(
       isLoading: true,
       isAuthenticated: false,
       hasHydrated: false,
+      preferredLang: 'en',
 
       setAuth: (user, accessToken) =>
-        set({ user, accessToken, isAuthenticated: true, isLoading: false }),
+        set((state) => ({
+          user,
+          accessToken,
+          isAuthenticated: true,
+          isLoading: false,
+          preferredLang: user?.preferredLang || state.preferredLang || 'en',
+        })),
+
+      setPreferredLang: (preferredLang) =>
+        set((state) => ({
+          preferredLang,
+          user: state.user ? { ...state.user, preferredLang } : state.user,
+        })),
 
       clearAuth: () =>
         set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false }),
@@ -24,13 +37,23 @@ const useAuthStore = create(
       // ── Auth Actions ──────────────────────────────────────────────
       login: async (email, password) => {
         const { data } = await api.post('/auth/login', { email, password });
-        set({ user: data.user, accessToken: data.accessToken, isAuthenticated: true });
+        set((state) => ({
+          user: data.user,
+          accessToken: data.accessToken,
+          isAuthenticated: true,
+          preferredLang: data.user?.preferredLang || state.preferredLang || 'en',
+        }));
         return data;
       },
 
       staffLogin: async (email, password) => {
         const { data } = await api.post('/auth/staff-login', { email, password });
-        set({ user: data.user, accessToken: data.accessToken, isAuthenticated: true });
+        set((state) => ({
+          user: data.user,
+          accessToken: data.accessToken,
+          isAuthenticated: true,
+          preferredLang: data.user?.preferredLang || state.preferredLang || 'en',
+        }));
         return data;
       },
 
@@ -41,7 +64,12 @@ const useAuthStore = create(
 
       verifyOTP: async (email, otp) => {
         const { data } = await api.post('/auth/verify-otp', { email, otp });
-        set({ user: data.user, accessToken: data.accessToken, isAuthenticated: true });
+        set((state) => ({
+          user: data.user,
+          accessToken: data.accessToken,
+          isAuthenticated: true,
+          preferredLang: data.user?.preferredLang || state.preferredLang || 'en',
+        }));
         return data;
       },
 
@@ -63,7 +91,12 @@ const useAuthStore = create(
             const { data } = await api.get('/auth/me', {
               headers: { Authorization: `Bearer ${token}` },
             });
-            set({ user: data.user, isAuthenticated: true, isLoading: false });
+            set((state) => ({
+              user: data.user,
+              isAuthenticated: true,
+              isLoading: false,
+              preferredLang: data.user?.preferredLang || state.preferredLang || 'en',
+            }));
             return;
           } catch {
             // Token may be expired — fall through to refresh
@@ -80,7 +113,12 @@ const useAuthStore = create(
             const meRes = await api.get('/auth/me', {
               headers: { Authorization: `Bearer ${data.accessToken}` },
             });
-            set({ user: meRes.data.user, isAuthenticated: true, isLoading: false });
+            set((state) => ({
+              user: meRes.data.user,
+              isAuthenticated: true,
+              isLoading: false,
+              preferredLang: meRes.data.user?.preferredLang || state.preferredLang || 'en',
+            }));
             return;
           }
         } catch {
@@ -101,6 +139,7 @@ const useAuthStore = create(
         user: state.user,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
+        preferredLang: state.preferredLang,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

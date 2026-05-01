@@ -12,6 +12,7 @@ import {
 } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
+import { getCustomerText } from '../i18n/customerText';
 
 const asideStyle = {
   width: 260,
@@ -34,9 +35,10 @@ const brandGold = {
 };
 
 export default function CustomerLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, preferredLang } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const t = getCustomerText(user?.preferredLang || preferredLang);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -49,7 +51,14 @@ export default function CustomerLayout() {
   const navClass = ({ isActive }) => `sidebar-link customer-dash-link ${isActive ? 'active' : ''}`;
 
   return (
-    <div className="customer-dashboard-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div
+      className="customer-dashboard-root"
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #091013 0%, #060f12 100%)',
+      }}
+    >
       <div
         className={`customer-dashboard-backdrop ${menuOpen ? 'visible' : ''}`}
         onClick={closeMenu}
@@ -84,24 +93,24 @@ export default function CustomerLayout() {
             marginBottom: 'var(--space-md)',
           }}
         >
-          DASHBOARD
+          {t('dashboard')}
         </p>
 
         <nav className="flex flex-col gap-xs" style={{ flex: 1 }}>
           <NavLink to="/customer" end className={navClass} onClick={closeMenu}>
-            <HiOutlineHome /> Home
+            <HiOutlineHome /> {t('home')}
           </NavLink>
           <NavLink to="/customer/bookings" className={navClass} onClick={closeMenu}>
-            <HiOutlineCalendar /> Bookings
+            <HiOutlineCalendar /> {t('bookings')}
           </NavLink>
           <NavLink to="/customer/orders" className={navClass} onClick={closeMenu}>
-            <HiOutlineShoppingBag /> Orders
+            <HiOutlineShoppingBag /> {t('orders')}
           </NavLink>
           <NavLink to="/customer/scan" className={navClass} onClick={closeMenu}>
-            <HiOutlineCamera /> Scan QR
+            <HiOutlineCamera /> {t('scanQr')}
           </NavLink>
           <NavLink to="/customer/loyalty" className={navClass} onClick={closeMenu}>
-            <HiOutlineHeart /> Loyalty
+            <HiOutlineHeart /> {t('loyalty')}
           </NavLink>
         </nav>
 
@@ -131,7 +140,7 @@ export default function CustomerLayout() {
                   {user.name?.charAt(0)}
                 </span>
                 <span className="customer-dash-profile-label">
-                  <span style={{ fontWeight: 600, color: '#f4f5ef' }}>Profile</span>
+                  <span style={{ fontWeight: 600, color: '#f4f5ef' }}>{t('profile')}</span>
                   <span style={{ fontSize: '0.75rem', color: '#8a9690', display: 'block', marginTop: 2 }}>
                     {user.name}
                   </span>
@@ -142,18 +151,27 @@ export default function CustomerLayout() {
                 className="customer-dash-logout"
                 onClick={handleLogout}
               >
-                <HiOutlineLogout /> Sign out
+                <HiOutlineLogout /> {t('signOut')}
               </button>
             </>
           ) : (
             <NavLink to="/login" className="customer-dash-signin" onClick={closeMenu}>
-              <HiOutlineUser /> Sign in
+              <HiOutlineUser /> {t('signIn')}
             </NavLink>
           )}
         </div>
       </aside>
 
-      <div className="customer-dashboard-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div
+        className="customer-dashboard-main"
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'linear-gradient(180deg, #091013 0%, #060f12 100%)',
+        }}
+      >
         <header className="customer-dashboard-mobile-header">
           <button
             type="button"
@@ -169,12 +187,36 @@ export default function CustomerLayout() {
           <span style={{ width: 40 }} />
         </header>
 
-        <main style={{ padding: 'var(--space-xl)', maxWidth: 1280, width: '100%', margin: '0 auto', flex: 1 }}>
+        <main style={{ padding: 'var(--space-xl)', maxWidth: 1280, width: '100%', margin: '0 auto', flex: 1, background: 'transparent' }}>
           <Outlet />
         </main>
       </div>
 
       <style>{`
+        .customer-dashboard-root .btn-primary {
+          border: 1px solid #d2c495;
+          background: linear-gradient(90deg, #b5a776, #958657);
+          color: #fdfbf5;
+          box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+        }
+        .customer-dashboard-root .btn-primary:hover {
+          box-shadow: 0 14px 28px rgba(0,0,0,0.42);
+          transform: translateY(-1px);
+        }
+        .customer-dashboard-root .btn-outline {
+          border-color: rgba(210, 196, 149, 0.35);
+          color: #dfcf9f;
+          background: rgba(255, 255, 255, 0.04);
+        }
+        .customer-dashboard-root .btn-outline:hover {
+          border-color: rgba(210, 196, 149, 0.62);
+          color: #f4ecd4;
+          background: rgba(181, 167, 118, 0.12);
+        }
+        .customer-dashboard-root .btn-ghost:hover {
+          color: #f4f5ef;
+          background: rgba(255, 255, 255, 0.06);
+        }
         .customer-dash-link {
           position: relative;
         }
@@ -241,8 +283,8 @@ export default function CustomerLayout() {
           align-items: center;
           justify-content: space-between;
           padding: var(--space-md) var(--space-lg);
-          border-bottom: 1px solid var(--border);
-          background: var(--glass-bg);
+          border-bottom: 1px solid rgba(210, 196, 149, 0.14);
+          background: rgba(8, 14, 18, 0.86);
           backdrop-filter: blur(12px);
           position: sticky;
           top: 0;

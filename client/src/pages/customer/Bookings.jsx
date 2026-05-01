@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { getCustomerText } from '../../i18n/customerText';
 
 const goldButton = {
   border: '1px solid #d2c495',
@@ -48,7 +49,8 @@ const getStatusStyle = (status) => {
 };
 
 export default function Bookings() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, preferredLang } = useAuthStore();
+  const t = getCustomerText(user?.preferredLang || preferredLang);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -64,7 +66,7 @@ export default function Bookings() {
       const { data } = await api.get('/bookings/my');
       setBookings(data.bookings || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load bookings');
+      setError(err.response?.data?.message || t('failed'));
     } finally {
       setLoading(false);
     }
@@ -79,10 +81,10 @@ export default function Bookings() {
     setCancellingId(bookingId);
     try {
       await api.put(`/bookings/${bookingId}/cancel`, { reason: 'Cancelled by customer' });
-      toast.success('Booking cancelled');
+      toast.success(t('bookingCancelled'));
       setBookings((prev) => prev.map((b) => (b._id === bookingId ? { ...b, status: 'cancelled' } : b)));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to cancel booking');
+      toast.error(err.response?.data?.message || t('failed'));
     } finally {
       setCancellingId(null);
     }
@@ -92,9 +94,9 @@ export default function Bookings() {
     if (!code) return;
     try {
       await navigator.clipboard.writeText(code);
-      toast.success(`Copied ${code}`);
+      toast.success(`${t('copied')} ${code}`);
     } catch {
-      toast.error('Failed to copy booking code');
+      toast.error(t('copyFailed'));
     }
   };
 
@@ -108,9 +110,9 @@ export default function Bookings() {
           background: 'rgba(255,255,255,0.03)',
         }}
       >
-        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>Your bookings</h2>
-        <p className="text-muted mb-lg">Sign in to view and manage your room reservations.</p>
-        <Link className="btn btn-primary" to="/login" style={goldButton}>Sign In</Link>
+        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>{t('bookings')}</h2>
+        <p className="text-muted mb-lg">{t('bookingsSignInHelp')}</p>
+        <Link className="btn btn-primary" to="/login" style={goldButton}>{t('signIn')}</Link>
       </div>
     );
   }
@@ -129,13 +131,13 @@ export default function Bookings() {
       <div className="flex items-center justify-between mb-lg" style={{ gap: 'var(--space-md)', flexWrap: 'wrap' }}>
         <div>
           <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 8 }}>
-            MY BOOKINGS
+            {t('myBookings')}
           </p>
           <h1 className="font-bold" style={{ fontSize: 'clamp(1.25rem, 2.6vw, 1.9rem)', lineHeight: 1.2, margin: 0 }}>
-            Track your stays and reservation status
+            {t('bookingsHeading')}
           </h1>
         </div>
-        <Link to="/customer/book-room" style={goldButton}>Book New Room</Link>
+        <Link to="/customer/book-room" style={goldButton}>{t('bookNewRoom')}</Link>
       </div>
 
       {loading && (
@@ -143,7 +145,7 @@ export default function Bookings() {
           className="card"
           style={{ borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', color: '#c5cdc8' }}
         >
-          Loading bookings...
+          {t('loadingBookings')}
         </div>
       )}
       {!loading && error && (
@@ -168,9 +170,9 @@ export default function Bookings() {
               }}
             >
               <p className="text-muted" style={{ marginBottom: 'var(--space-md)' }}>
-                You do not have any bookings yet.
+                {t('noBookings')}
               </p>
-              <Link to="/customer/book-room" style={goldButton}>Book a Room</Link>
+              <Link to="/customer/book-room" style={goldButton}>{t('bookRoom')}</Link>
             </div>
           ) : (
             bookings.map((booking) => (
@@ -186,8 +188,8 @@ export default function Bookings() {
                 <div className="flex justify-between items-center mb-sm">
                   <h3 className="font-bold" style={{ color: '#f4f5ef' }}>
                     {booking.type === 'room'
-                      ? `Room ${booking.room?.roomNumber || '-'}`
-                      : `Table ${booking.table?.tableNumber || '-'}`}
+                      ? `${t('room')} ${booking.room?.roomNumber || '-'}`
+                      : `${t('table')} ${booking.table?.tableNumber || '-'}`}
                   </h3>
                   <span
                     className="badge"
@@ -197,11 +199,11 @@ export default function Bookings() {
                       ...getStatusStyle(booking.status),
                     }}
                   >
-                    {(booking.status || 'pending').replace('_', ' ')}
+                    {t(`status_${booking.status || 'pending'}`)}
                   </span>
                 </div>
                 <p className="text-sm" style={{ color: '#b7c1bb' }}>
-                  Booking ID:{' '}
+                  {t('bookingId')}:{' '}
                   <button
                     className="btn btn-ghost btn-sm"
                     onClick={() => copyBookingCode(booking.bookingCode)}
@@ -211,16 +213,16 @@ export default function Bookings() {
                   </button>
                 </p>
                 <p className="text-sm" style={{ color: '#9aa6a0' }}>
-                  Type: <span style={{ textTransform: 'capitalize' }}>{booking.type}</span>
+                  {t('type')}: <span style={{ textTransform: 'capitalize' }}>{booking.type === 'room' ? t('room') : t('table')}</span>
                 </p>
                 <p className="text-sm" style={{ color: '#9aa6a0' }}>
-                  Check-in: {booking.checkIn ? new Date(booking.checkIn).toLocaleDateString('en-IN') : 'N/A'}
+                  {t('checkIn')}: {booking.checkIn ? new Date(booking.checkIn).toLocaleDateString('en-IN') : 'N/A'}
                 </p>
                 <p className="text-sm" style={{ color: '#9aa6a0' }}>
-                  Check-out: {booking.checkOut ? new Date(booking.checkOut).toLocaleDateString('en-IN') : 'N/A'}
+                  {t('checkOut')}: {booking.checkOut ? new Date(booking.checkOut).toLocaleDateString('en-IN') : 'N/A'}
                 </p>
                 <p className="text-sm mb-sm" style={{ color: '#9aa6a0' }}>
-                  Guests: {booking.guestCount || 0}
+                  {t('guests')}: {booking.guestCount || 0}
                 </p>
                 {['pending', 'confirmed'].includes(booking.status) && (
                   <button
@@ -233,7 +235,7 @@ export default function Bookings() {
                       color: '#f0b2b2',
                     }}
                   >
-                    {cancellingId === booking._id ? 'Cancelling...' : 'Cancel Booking'}
+                    {cancellingId === booking._id ? t('cancelling') : t('cancelBooking')}
                   </button>
                 )}
               </div>

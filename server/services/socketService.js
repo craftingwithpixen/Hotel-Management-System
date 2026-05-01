@@ -146,6 +146,35 @@ const emitTableStatus = (io, table) => {
   }).catch(() => {});
 };
 
+const emitCustomerHelpRequested = (io, helpRequest) => {
+  const payload = {
+    helpRequestId: helpRequest._id,
+    tableId: helpRequest.table?._id || helpRequest.table,
+    tableNumber: helpRequest.table?.tableNumber,
+    customerName: helpRequest.customer?.name,
+    orderCode: helpRequest.order?.orderCode,
+    createdAt: helpRequest.createdAt,
+    status: helpRequest.status,
+  };
+
+  io.to("waiter").to("admin").to("receptionist").emit("table:help", payload);
+
+  void notifyRoles(["waiter", "admin", "receptionist"], {
+    type: "table:help",
+    message: `Table ${payload.tableNumber || "Unknown"} requested help`,
+    payload,
+  }).catch(() => {});
+};
+
+const emitCustomerHelpResolved = (io, helpRequest) => {
+  io.to("waiter").to("admin").to("receptionist").emit("table:help:resolved", {
+    helpRequestId: helpRequest._id,
+    tableId: helpRequest.table?._id || helpRequest.table,
+    resolvedAt: helpRequest.resolvedAt,
+    status: helpRequest.status,
+  });
+};
+
 module.exports = {
   emitNewOrder,
   emitOrderUpdate,
@@ -155,4 +184,6 @@ module.exports = {
   emitInventoryAlert,
   emitPaymentCaptured,
   emitTableStatus,
+  emitCustomerHelpRequested,
+  emitCustomerHelpResolved,
 };

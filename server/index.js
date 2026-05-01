@@ -29,6 +29,7 @@ const inventoryRoutes = require("./routes/v1/inventory.routes");
 const reportRoutes = require("./routes/v1/report.routes");
 const customerRoutes = require("./routes/v1/customer.routes");
 const notificationRoutes = require("./routes/v1/notification.routes");
+const helpRoutes = require("./routes/v1/help.routes");
 
 const app = express();
 const server = http.createServer(app);
@@ -90,6 +91,7 @@ app.use("/api/v1/inventory", inventoryRoutes);
 app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/customer", customerRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
+app.use("/api/v1/help-requests", helpRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { HiOutlineShoppingCart, HiOutlinePlus, HiOutlineMinus, HiOutlineTrash, HiOutlinePrinter, HiOutlineSearch } from 'react-icons/hi';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import useSocket from '../../hooks/useSocket';
 import toast from 'react-hot-toast';
 
 export default function OrderPad() {
@@ -14,12 +15,16 @@ export default function OrderPad() {
   const [category, setCategory] = useState('all');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [helpRequests, setHelpRequests] = useState([]);
+  const [resolvingHelpId, setResolvingHelpId] = useState('');
+  const { on } = useSocket();
 
   useEffect(() => {
     Promise.all([
       api.get('/tables'),
       api.get('/menu'),
-    ]).then(([tRes, mRes]) => {
+      api.get('/help-requests/active'),
+    ]).then(([tRes, mRes, hRes]) => {
       setTables(tRes.data.tables || []);
       // Normalize menu payload from backend and keep only available, non-deleted items.
       const rawMenu = Array.isArray(mRes.data?.items)
@@ -29,14 +34,55 @@ export default function OrderPad() {
           : [];
       const availableMenu = rawMenu.filter((item) => item && item.isDeleted !== true && item.isAvailable !== false);
       setMenu(availableMenu);
+      setHelpRequests(hRes.data.helpRequests || []);
       if (availableMenu.length === 0) {
         toast('No available menu items found in DB');
       }
-    }).catch(() => toast.error('Failed to load data'))
+    }).catch(async () => {
+      try {
+        const { data } = await api.get('/help-requests/active');
+        setHelpRequests(data.helpRequests || []);
+      } catch {
+        // no-op
+      }
+      toast.error('Failed to load data');
+    })
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const offHelp = on('table:help', (payload) => {
+      setHelpRequests((prev) => {
+        const exists = prev.some((item) => item._id === payload.helpRequestId);
+        if (exists) return prev;
+        return [{
+          _id: payload.helpRequestId,
+          status: 'active',
+          createdAt: payload.createdAt,
+          table: payload.tableId ? { _id: payload.tableId, tableNumber: payload.tableNumber } : null,
+          customer: payload.customerName ? { name: payload.customerName } : null,
+          order: payload.orderCode ? { orderCode: payload.orderCode } : null,
+        }, ...prev];
+      });
+      toast('Customer needs help on a table');
+    });
+
+    const offResolved = on('table:help:resolved', (payload) => {
+      setHelpRequests((prev) => prev.filter((item) => item._id !== payload.helpRequestId));
+    });
+
+    return () => {
+      if (offHelp) offHelp();
+      if (offResolved) offResolved();
+    };
+  }, [on]);
+
   const categories = ['all', ...new Set(menu.map(i => i.category))];
+  const activeHelpByTable = helpRequests.reduce((acc, req) => {
+    const tableId = req.table?._id || req.table;
+    if (req.status === 'active' && tableId) acc[tableId] = req;
+    return acc;
+  }, {});
 
   const filtered = menu.filter(item => {
     const matchCat = category === 'all' || item.category === category;
@@ -60,6 +106,20 @@ export default function OrderPad() {
   };
 
   const cartTotal = cart.reduce((s, c) => s + c.price * c.quantity, 0);
+
+  const resolveHelpRequest = async (requestId) => {
+    if (!requestId) return;
+    setResolvingHelpId(requestId);
+    try {
+      await api.patch(`/help-requests/${requestId}/resolve`);
+      setHelpRequests((prev) => prev.filter((item) => item._id !== requestId));
+      toast.success('Help request closed');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to close help request');
+    } finally {
+      setResolvingHelpId('');
+    }
+  };
 
   const submitOrder = async () => {
     if (!selTable) return toast.error('Select a table first');
@@ -99,13 +159,42 @@ export default function OrderPad() {
               key={t._id}
               onClick={() => setSelTable(t)}
               className={`btn btn-sm ${selTable?._id === t._id ? 'btn-primary' : 'btn-outline'}`}
-              style={{ minWidth: 64 }}
+              style={{ minWidth: 64, position: 'relative' }}
             >
               {t.tableNumber}
               <span style={{ fontSize: '0.65rem', display: 'block', opacity: 0.8 }}>{t.status}</span>
+              {activeHelpByTable[t._id] && (
+                <span
+                  className="badge badge-danger"
+                  style={{ position: 'absolute', top: -8, right: -8, fontSize: '0.6rem' }}
+                >
+                  HELP
+                </span>
+              )}
             </button>
           ))}
         </div>
+
+        {helpRequests.length > 0 && (
+          <div className="card" style={{ marginBottom: 'var(--space-md)', borderColor: 'rgba(255,95,95,0.4)' }}>
+            <div className="font-semibold mb-xs">Customer Help Alerts</div>
+            {helpRequests.slice(0, 5).map((req) => (
+              <div key={req._id} className="flex items-center justify-between gap-sm text-sm mb-xs">
+                <div>
+                  Table <strong>{req.table?.tableNumber || '—'}</strong> needs help
+                  {req.customer?.name ? ` · ${req.customer.name}` : ''}
+                </div>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => resolveHelpRequest(req._id)}
+                  disabled={resolvingHelpId === req._id}
+                >
+                  {resolvingHelpId === req._id ? 'Closing...' : 'Close'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Search + Category Filter */}
         <div className="flex gap-sm" style={{ marginBottom: 'var(--space-md)', flexShrink: 0 }}>

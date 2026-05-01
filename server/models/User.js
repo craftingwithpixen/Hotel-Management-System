@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     otp: { type: String },
     otpExpiry: { type: Date },
     loyaltyPoints: { type: Number, default: 0 },
-    preferredLang: { type: String, enum: ["en", "mr"], default: "en" },
+    preferredLang: { type: String, enum: ["en", "hi", "mr"], default: "en" },
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
