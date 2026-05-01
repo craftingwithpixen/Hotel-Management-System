@@ -333,6 +333,17 @@ export default function Profile() {
           border-color: rgba(255,255,255,0.12);
           color: #f4f5ef;
         }
+        .customer-input-wrap select.input {
+          color-scheme: dark;
+        }
+        .customer-input-wrap select.input option {
+          background: #11191c;
+          color: #f4f5ef;
+        }
+        .customer-input-wrap select.input option:checked {
+          background: #b5a776;
+          color: #0b1113;
+        }
         .customer-input-wrap .input:focus {
           border-color: rgba(210,196,149,0.55);
           box-shadow: 0 0 0 3px rgba(181,167,118,0.14);
