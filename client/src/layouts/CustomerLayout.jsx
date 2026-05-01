@@ -12,6 +12,7 @@ import {
 } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
+import { getCustomerText } from '../i18n/customerText';
 
 const asideStyle = {
   width: 260,
@@ -34,9 +35,10 @@ const brandGold = {
 };
 
 export default function CustomerLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, preferredLang } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const t = getCustomerText(user?.preferredLang || preferredLang);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -91,24 +93,24 @@ export default function CustomerLayout() {
             marginBottom: 'var(--space-md)',
           }}
         >
-          DASHBOARD
+          {t('dashboard')}
         </p>
 
         <nav className="flex flex-col gap-xs" style={{ flex: 1 }}>
           <NavLink to="/customer" end className={navClass} onClick={closeMenu}>
-            <HiOutlineHome /> Home
+            <HiOutlineHome /> {t('home')}
           </NavLink>
           <NavLink to="/customer/bookings" className={navClass} onClick={closeMenu}>
-            <HiOutlineCalendar /> Bookings
+            <HiOutlineCalendar /> {t('bookings')}
           </NavLink>
           <NavLink to="/customer/orders" className={navClass} onClick={closeMenu}>
-            <HiOutlineShoppingBag /> Orders
+            <HiOutlineShoppingBag /> {t('orders')}
           </NavLink>
           <NavLink to="/customer/scan" className={navClass} onClick={closeMenu}>
-            <HiOutlineCamera /> Scan QR
+            <HiOutlineCamera /> {t('scanQr')}
           </NavLink>
           <NavLink to="/customer/loyalty" className={navClass} onClick={closeMenu}>
-            <HiOutlineHeart /> Loyalty
+            <HiOutlineHeart /> {t('loyalty')}
           </NavLink>
         </nav>
 
@@ -138,7 +140,7 @@ export default function CustomerLayout() {
                   {user.name?.charAt(0)}
                 </span>
                 <span className="customer-dash-profile-label">
-                  <span style={{ fontWeight: 600, color: '#f4f5ef' }}>Profile</span>
+                  <span style={{ fontWeight: 600, color: '#f4f5ef' }}>{t('profile')}</span>
                   <span style={{ fontSize: '0.75rem', color: '#8a9690', display: 'block', marginTop: 2 }}>
                     {user.name}
                   </span>
@@ -149,12 +151,12 @@ export default function CustomerLayout() {
                 className="customer-dash-logout"
                 onClick={handleLogout}
               >
-                <HiOutlineLogout /> Sign out
+                <HiOutlineLogout /> {t('signOut')}
               </button>
             </>
           ) : (
             <NavLink to="/login" className="customer-dash-signin" onClick={closeMenu}>
-              <HiOutlineUser /> Sign in
+              <HiOutlineUser /> {t('signIn')}
             </NavLink>
           )}
         </div>

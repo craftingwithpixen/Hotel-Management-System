@@ -9,29 +9,30 @@ import {
   HiOutlineUser,
 } from 'react-icons/hi';
 import useAuthStore from '../../store/authStore';
+import { getCustomerText } from '../../i18n/customerText';
 
 const quickActions = [
   {
-    title: 'Book a Stay',
-    text: 'Reserve a room with your saved guest profile.',
+    titleKey: 'bookStay',
+    textKey: 'quickBookStayText',
     to: '/customer/book-room',
     icon: HiOutlineCalendar,
   },
   {
-    title: 'Scan Table QR',
-    text: 'Open the table menu and place a fresh order.',
+    titleKey: 'scanTableQr',
+    textKey: 'quickScanText',
     to: '/customer/scan',
     icon: HiOutlineCamera,
   },
   {
-    title: 'Track Orders',
-    text: 'View food status and service help requests.',
+    titleKey: 'orders',
+    textKey: 'quickOrdersText',
     to: '/customer/orders',
     icon: HiOutlineShoppingBag,
   },
   {
-    title: 'Rewards',
-    text: 'Check points, tier progress, and history.',
+    titleKey: 'rewards',
+    textKey: 'quickRewardsText',
     to: '/customer/loyalty',
     icon: HiOutlineHeart,
   },
@@ -51,8 +52,9 @@ const goldButton = {
 };
 
 export default function Browse() {
-  const { user } = useAuthStore();
+  const { user, preferredLang } = useAuthStore();
   const displayName = user?.name || 'Guest';
+  const t = getCustomerText(user?.preferredLang || preferredLang);
 
   return (
     <div
@@ -69,37 +71,37 @@ export default function Browse() {
         <section className="customer-home-hero">
           <div className="customer-home-hero-copy">
             <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 10 }}>
-              GRAND PARADISE
+              {t('homeEyebrow')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.65rem, 4vw, 3rem)', lineHeight: 1.08, marginBottom: 12 }}>
-              Welcome back, {displayName}
+              {t('welcomeBack')}, {displayName}
             </h1>
             <p style={{ color: '#c5cdc8', maxWidth: 620, fontSize: '1rem' }}>
-              Book stays, scan your table QR, place orders, and keep your rewards in view from one calm guest dashboard.
+              {t('homeIntro')}
             </p>
             <div className="customer-home-actions">
               <Link to="/customer/book-room" className="btn btn-primary" style={goldButton}>
-                Book a Stay <HiOutlineArrowRight />
+                {t('bookStay')} <HiOutlineArrowRight />
               </Link>
               <Link to="/customer/scan" className="btn btn-outline">
-                <HiOutlineCamera /> Scan QR
+                <HiOutlineCamera /> {t('scanQr')}
               </Link>
             </div>
           </div>
 
           <div className="customer-home-guest-card">
             <span className="customer-home-avatar">{displayName.charAt(0).toUpperCase()}</span>
-            <p>Guest Profile</p>
+            <p>{t('guestProfile')}</p>
             <h2>{displayName}</h2>
             <div className="customer-home-mini-row">
               <span><HiOutlineHeart /></span>
               <div>
                 <strong>{Number(user?.loyaltyPoints || 0).toLocaleString('en-IN')}</strong>
-                <small>Reward points</small>
+                <small>{t('rewardPoints')}</small>
               </div>
             </div>
             <Link to="/customer/profile" className="btn btn-outline btn-sm">
-              <HiOutlineUser /> Manage Profile
+              <HiOutlineUser /> {t('manageProfile')}
             </Link>
           </div>
         </section>
@@ -108,11 +110,11 @@ export default function Browse() {
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
-              <Link key={action.title} to={action.to} className="customer-home-action-card">
+              <Link key={action.titleKey} to={action.to} className="customer-home-action-card">
                 <span><Icon /></span>
                 <div>
-                  <h3>{action.title}</h3>
-                  <p>{action.text}</p>
+                  <h3>{t(action.titleKey)}</h3>
+                  <p>{t(action.textKey)}</p>
                 </div>
                 <HiOutlineArrowRight className="customer-home-arrow" />
               </Link>
@@ -124,12 +126,12 @@ export default function Browse() {
           <div>
             <span><HiOutlineSparkles /></span>
             <div>
-              <h2>Ready for a seamless visit?</h2>
-              <p>Use bookings for stays, scan QR for table dining, and raise help from active orders whenever service is needed.</p>
+              <h2>{t('readyVisit')}</h2>
+              <p>{t('readyVisitText')}</p>
             </div>
           </div>
           <Link to="/customer/bookings" className="btn btn-outline">
-            View Bookings
+            {t('viewBookings')}
           </Link>
         </section>
       </div>

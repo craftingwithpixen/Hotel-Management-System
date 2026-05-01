@@ -11,6 +11,7 @@ import {
 } from 'react-icons/hi';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import { getCustomerText, languageName } from '../../i18n/customerText';
 
 const goldButton = {
   border: '1px solid #d2c495',
@@ -25,20 +26,15 @@ const goldButton = {
   fontSize: '0.9rem',
 };
 
-const languageLabel = {
-  en: 'English',
-  hi: 'Hindi',
-  mr: 'Marathi',
-};
-
 export default function Profile() {
-  const { user, isAuthenticated, setAuth } = useAuthStore();
+  const { user, isAuthenticated, preferredLang: globalPreferredLang, setAuth, setPreferredLang: setGlobalPreferredLang } = useAuthStore();
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [preferredLang, setPreferredLang] = useState(user?.preferredLang || 'en');
+  const [preferredLang, setPreferredLang] = useState(user?.preferredLang || globalPreferredLang || 'en');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
+  const t = getCustomerText(preferredLang);
 
   if (!isAuthenticated) {
     return (
@@ -50,9 +46,9 @@ export default function Profile() {
           background: 'rgba(255,255,255,0.03)',
         }}
       >
-        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>Your profile</h2>
-        <p className="text-muted mb-lg">Sign in to manage your profile preferences.</p>
-        <Link className="btn btn-primary" to="/login" style={goldButton}>Sign In</Link>
+        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>{t('profileTitle')}</h2>
+        <p className="text-muted mb-lg">{t('profileSignInHelp')}</p>
+        <Link className="btn btn-primary" to="/login" style={goldButton}>{t('signIn')}</Link>
       </div>
     );
   }
@@ -65,13 +61,18 @@ export default function Profile() {
       const { data } = await api.put('/customer/profile', { name, phone, preferredLang });
       setAuth(data.user, useAuthStore.getState().accessToken);
       setMessageType('success');
-      setMessage('Profile updated successfully.');
+      setMessage(t('saved'));
     } catch (err) {
       setMessageType('error');
-      setMessage(err.response?.data?.message || 'Failed to update profile.');
+      setMessage(err.response?.data?.message || t('failed'));
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleLanguageChange = (value) => {
+    setPreferredLang(value);
+    setGlobalPreferredLang(value);
   };
 
   return (
@@ -89,13 +90,13 @@ export default function Profile() {
         <section className="customer-profile-hero">
           <div>
             <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 10 }}>
-              MY PROFILE
+              {t('profileEyebrow')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.45rem, 3vw, 2.3rem)', lineHeight: 1.12, marginBottom: 12 }}>
-              Keep your stay details ready
+              {t('profileHeading')}
             </h1>
             <p style={{ color: '#b7c1bb', maxWidth: 560 }}>
-              Manage the contact details and language preference used across bookings, orders, and service updates.
+              {t('profileIntro')}
             </p>
           </div>
         </section>
@@ -104,34 +105,34 @@ export default function Profile() {
           <aside className="customer-profile-summary">
             <div className="customer-profile-avatar">
               {user?.avatar ? (
-                <img src={user.avatar} alt={user.name || 'Profile'} />
+                <img src={user.avatar} alt={user.name || t('profile')} />
               ) : (
                 <span>{(name || user?.name || 'G').charAt(0).toUpperCase()}</span>
               )}
             </div>
-            <h2>{name || user?.name || 'Guest Customer'}</h2>
-            <p>{user?.email || 'No email added'}</p>
+            <h2>{name || user?.name || t('guestProfile')}</h2>
+            <p>{user?.email || t('noEmail')}</p>
 
             <div className="customer-profile-facts">
               <div>
                 <span><HiOutlineShieldCheck /></span>
                 <div>
-                  <strong>Account</strong>
+                  <strong>{t('account')}</strong>
                   <p>{user?.role || 'customer'}</p>
                 </div>
               </div>
               <div>
                 <span><HiOutlineGlobeAlt /></span>
                 <div>
-                  <strong>Language</strong>
-                  <p>{languageLabel[preferredLang] || preferredLang}</p>
+                  <strong>{t('language')}</strong>
+                  <p>{languageName(preferredLang)}</p>
                 </div>
               </div>
               <div>
                 <span><HiOutlineSparkles /></span>
                 <div>
-                  <strong>Rewards</strong>
-                  <p>{Number(user?.loyaltyPoints || 0).toLocaleString('en-IN')} points</p>
+                  <strong>{t('rewards')}</strong>
+                  <p>{Number(user?.loyaltyPoints || 0).toLocaleString('en-IN')} {t('points')}</p>
                 </div>
               </div>
             </div>
@@ -141,14 +142,14 @@ export default function Profile() {
             <div className="flex items-center gap-sm" style={{ marginBottom: 'var(--space-lg)' }}>
               <span className="customer-form-icon"><HiOutlineUser /></span>
               <div>
-                <h2 className="font-bold" style={{ color: '#f4f5ef', margin: 0, fontSize: '1.15rem' }}>Personal details</h2>
-                <p style={{ color: '#8a9690', margin: '3px 0 0', fontSize: '0.9rem' }}>Update your guest profile information.</p>
+                <h2 className="font-bold" style={{ color: '#f4f5ef', margin: 0, fontSize: '1.15rem' }}>{t('personalDetails')}</h2>
+                <p style={{ color: '#8a9690', margin: '3px 0 0', fontSize: '0.9rem' }}>{t('personalDetailsHint')}</p>
               </div>
             </div>
 
             <div className="customer-profile-fields">
               <div className="input-group">
-                <label>Name</label>
+                <label>{t('name')}</label>
                 <div className="customer-input-wrap">
                   <HiOutlineUser />
                   <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -156,7 +157,7 @@ export default function Profile() {
               </div>
 
               <div className="input-group">
-                <label>Email</label>
+                <label>{t('email')}</label>
                 <div className="customer-input-wrap is-disabled">
                   <HiOutlineMail />
                   <input className="input" value={user?.email || ''} disabled />
@@ -164,21 +165,21 @@ export default function Profile() {
               </div>
 
               <div className="input-group">
-                <label>Phone</label>
+                <label>{t('phone')}</label>
                 <div className="customer-input-wrap">
                   <HiOutlinePhone />
-                  <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Add phone number" />
+                  <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('addPhone')} />
                 </div>
               </div>
 
               <div className="input-group">
-                <label>Preferred Language</label>
+                <label>{t('preferredLanguage')}</label>
                 <div className="customer-input-wrap">
                   <HiOutlineGlobeAlt />
-                  <select className="input" value={preferredLang} onChange={(e) => setPreferredLang(e.target.value)}>
-                    <option value="en">English</option>
-                    <option value="hi">Hindi</option>
-                    <option value="mr">Marathi</option>
+                  <select className="input" value={preferredLang} onChange={(e) => handleLanguageChange(e.target.value)}>
+                    <option value="en">{t('english')}</option>
+                    <option value="hi">{t('hindi')}</option>
+                    <option value="mr">{t('marathi')}</option>
                   </select>
                 </div>
               </div>
@@ -186,7 +187,7 @@ export default function Profile() {
 
             <div className="customer-profile-actions">
               <button className="btn btn-primary" type="submit" disabled={saving} style={goldButton}>
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? t('saving') : t('saveChanges')}
               </button>
               {message && (
                 <p className={messageType === 'success' ? 'is-success' : 'is-error'}>

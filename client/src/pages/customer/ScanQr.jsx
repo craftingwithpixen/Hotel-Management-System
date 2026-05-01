@@ -9,6 +9,8 @@ import {
   HiOutlineTable,
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
+import useAuthStore from '../../store/authStore';
+import { getCustomerText } from '../../i18n/customerText';
 
 const goldButton = {
   border: '1px solid #d2c495',
@@ -42,12 +44,14 @@ const extractTableId = (value) => {
 
 export default function ScanQr() {
   const navigate = useNavigate();
+  const { user, preferredLang } = useAuthStore();
+  const t = getCustomerText(user?.preferredLang || preferredLang);
   const [qrValue, setQrValue] = useState('');
 
   const handleOpen = () => {
     const tableId = extractTableId(qrValue);
     if (!tableId) {
-      toast.error('Paste QR link or table ID');
+      toast.error(t('pasteQrError'));
       return;
     }
     navigate(`/scan/table/${tableId}`);
@@ -57,9 +61,9 @@ export default function ScanQr() {
     try {
       const text = await navigator.clipboard.readText();
       setQrValue(text);
-      toast.success('QR link pasted');
+      toast.success(t('qrPasted'));
     } catch {
-      toast.error('Clipboard permission is blocked');
+      toast.error(t('clipboardBlocked'));
     }
   };
 
@@ -78,13 +82,13 @@ export default function ScanQr() {
         <section className="customer-scan-hero">
           <div>
             <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 10 }}>
-              SCAN TABLE QR
+              {t('scanEyebrow')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.45rem, 3vw, 2.3rem)', lineHeight: 1.12, marginBottom: 12 }}>
-              Open your table menu in seconds
+              {t('scanHeading')}
             </h1>
             <p style={{ color: '#b7c1bb', maxWidth: 560 }}>
-              Use the QR link from your table to browse the menu, add items, and send your order straight to the kitchen.
+              {t('scanIntro')}
             </p>
           </div>
           <div className="customer-scan-visual" aria-hidden="true">
@@ -103,17 +107,17 @@ export default function ScanQr() {
             <div className="flex items-center gap-sm" style={{ marginBottom: 'var(--space-md)' }}>
               <span className="customer-scan-icon"><HiOutlineCamera /></span>
               <div>
-                <h2 className="font-bold" style={{ color: '#f4f5ef', margin: 0, fontSize: '1.1rem' }}>Enter QR details</h2>
-                <p style={{ color: '#8a9690', fontSize: '0.86rem', margin: '2px 0 0' }}>Paste the scanned link or the table ID.</p>
+                <h2 className="font-bold" style={{ color: '#f4f5ef', margin: 0, fontSize: '1.1rem' }}>{t('enterQrDetails')}</h2>
+                <p style={{ color: '#8a9690', fontSize: '0.86rem', margin: '2px 0 0' }}>{t('pasteQrHint')}</p>
               </div>
             </div>
 
             <div className="input-group" style={{ marginBottom: 'var(--space-md)' }}>
-              <label style={{ color: '#c5cdc8' }}>QR Link or Table ID</label>
+              <label style={{ color: '#c5cdc8' }}>{t('qrLinkOrTableId')}</label>
               <div className="customer-scan-input-row">
                 <input
                   className="input"
-                  placeholder="https://.../scan/table/<tableId> or <tableId>"
+                  placeholder={t('qrPlaceholder')}
                   value={qrValue}
                   onChange={(e) => setQrValue(e.target.value)}
                   onKeyDown={(e) => {
@@ -133,10 +137,10 @@ export default function ScanQr() {
 
             <div className="customer-scan-actions">
               <button className="btn btn-outline" type="button" onClick={() => navigate('/customer')} style={softButton}>
-                Cancel
+                {t('cancel')}
               </button>
               <button className="btn btn-primary" type="button" onClick={handleOpen} style={goldButton}>
-                Open Table Menu <HiOutlineArrowRight />
+                {t('openTableMenu')} <HiOutlineArrowRight />
               </button>
             </div>
           </div>
@@ -145,22 +149,22 @@ export default function ScanQr() {
             <div className="customer-scan-guide-row">
               <span><HiOutlineQrcode /></span>
               <div>
-                <strong>Scan the QR</strong>
-                <p>Use your camera app or QR scanner at the table.</p>
+                <strong>{t('scanTheQr')}</strong>
+                <p>{t('scanTheQrHint')}</p>
               </div>
             </div>
             <div className="customer-scan-guide-row">
               <span><HiOutlineTable /></span>
               <div>
-                <strong>Confirm table</strong>
-                <p>The menu opens for the table linked to that code.</p>
+                <strong>{t('confirmTable')}</strong>
+                <p>{t('confirmTableHint')}</p>
               </div>
             </div>
             <div className="customer-scan-guide-row">
               <span><HiOutlineSparkles /></span>
               <div>
-                <strong>Order fresh</strong>
-                <p>Add items and place the order after signing in.</p>
+                <strong>{t('orderFresh')}</strong>
+                <p>{t('orderFreshHint')}</p>
               </div>
             </div>
           </aside>

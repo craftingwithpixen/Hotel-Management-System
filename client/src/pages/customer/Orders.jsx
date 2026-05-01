@@ -13,6 +13,7 @@ import {
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { getCustomerText } from '../../i18n/customerText';
 
 const ACTIVE_ORDER_STATUSES = new Set(['pending', 'preparing', 'ready', 'served']);
 
@@ -95,7 +96,8 @@ const helpMatchesOrder = (req, order) => (
 );
 
 export default function Orders() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, preferredLang } = useAuthStore();
+  const t = getCustomerText(user?.preferredLang || preferredLang);
   const [orders, setOrders] = useState([]);
   const [helpRequests, setHelpRequests] = useState([]);
   const [helpLoadingByOrder, setHelpLoadingByOrder] = useState({});
@@ -117,7 +119,7 @@ export default function Orders() {
         setOrders(orderData.orders || []);
         setHelpRequests(helpData.helpRequests || []);
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load orders');
+        setError(err.response?.data?.message || t('failed'));
       } finally {
         setLoading(false);
       }
@@ -132,9 +134,9 @@ export default function Orders() {
     if (!code) return;
     try {
       await navigator.clipboard.writeText(code);
-      toast.success(`Copied ${code}`);
+      toast.success(`${t('copied')} ${code}`);
     } catch {
-      toast.error('Failed to copy order code');
+      toast.error(t('copyFailed'));
     }
   };
 
@@ -144,7 +146,7 @@ export default function Orders() {
 
   const requestHelp = async (order) => {
     if (!order?.table?._id) {
-      toast.error('Table information missing for this order');
+      toast.error(t('tableInfoMissing'));
       return;
     }
     setHelpLoadingByOrder((prev) => ({ ...prev, [order._id]: true }));
@@ -163,9 +165,9 @@ export default function Orders() {
         }
         return [incoming, ...prev];
       });
-      toast.success(data.alreadyActive ? 'Help request already active' : 'Waiter has been notified');
+      toast.success(data.alreadyActive ? t('helpAlreadyActive') : t('waiterNotified'));
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to request help');
+      toast.error(err?.response?.data?.message || t('failed'));
     } finally {
       setHelpLoadingByOrder((prev) => ({ ...prev, [order._id]: false }));
     }
@@ -182,9 +184,9 @@ export default function Orders() {
       setHelpRequests((prev) => prev.map((item) => (
         item._id === resolved._id ? resolved : item
       )));
-      toast.success('Help request closed');
+      toast.success(t('helpRequestClosed'));
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to close help request');
+      toast.error(err?.response?.data?.message || t('failed'));
     } finally {
       setHelpLoadingByOrder((prev) => ({ ...prev, [order._id]: false }));
     }
@@ -200,9 +202,9 @@ export default function Orders() {
           background: 'rgba(255,255,255,0.03)',
         }}
       >
-        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>Your orders</h2>
-        <p className="text-muted mb-lg">Sign in to check your food and service orders.</p>
-        <Link className="btn btn-primary" to="/login" style={goldButton}>Sign In</Link>
+        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>{t('orders')}</h2>
+        <p className="text-muted mb-lg">{t('ordersSignInHelp')}</p>
+        <Link className="btn btn-primary" to="/login" style={goldButton}>{t('signIn')}</Link>
       </div>
     );
   }
@@ -224,14 +226,14 @@ export default function Orders() {
       <div className="flex items-center justify-between mb-lg customer-orders-header" style={{ gap: 'var(--space-md)', flexWrap: 'wrap' }}>
         <div>
           <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 8 }}>
-            MY ORDERS
+            {t('myOrders')}
           </p>
           <h1 className="font-bold" style={{ fontSize: 'clamp(1.25rem, 2.6vw, 1.9rem)', lineHeight: 1.2, margin: 0 }}>
-            Track table orders and service requests
+            {t('ordersHeading')}
           </h1>
         </div>
         <Link to="/customer/scan" className="btn btn-primary" style={goldButton}>
-          <HiOutlineShoppingBag /> Start Order
+          <HiOutlineShoppingBag /> {t('startOrder')}
         </Link>
       </div>
 
@@ -240,21 +242,21 @@ export default function Orders() {
           <span><HiOutlineClipboardList /></span>
           <div>
             <strong>{orders.length}</strong>
-            <p>Total orders</p>
+            <p>{t('totalOrders')}</p>
           </div>
         </div>
         <div className="customer-orders-stat">
           <span><HiOutlineClock /></span>
           <div>
             <strong>{activeOrderCount}</strong>
-            <p>Active now</p>
+            <p>{t('activeNow')}</p>
           </div>
         </div>
         <div className="customer-orders-stat">
           <span><HiOutlineBell /></span>
           <div>
             <strong>{activeHelpCount}</strong>
-            <p>Help requests</p>
+            <p>{t('helpRequests')}</p>
           </div>
         </div>
       </div>
@@ -264,7 +266,7 @@ export default function Orders() {
           className="card"
           style={{ borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', color: '#c5cdc8' }}
         >
-          Loading orders...
+          {t('loadingOrders')}
         </div>
       )}
       {!loading && error && (
@@ -290,9 +292,9 @@ export default function Orders() {
             >
               <HiOutlineShoppingBag style={{ fontSize: '2.4rem', color: '#d8c69b', marginBottom: 'var(--space-md)' }} />
               <p className="text-muted" style={{ marginBottom: 'var(--space-md)' }}>
-                You do not have any food orders yet.
+                {t('noFoodOrders')}
               </p>
-              <Link to="/customer/scan" className="btn btn-primary" style={goldButton}>Scan Table QR</Link>
+              <Link to="/customer/scan" className="btn btn-primary" style={goldButton}>{t('scanTableQr')}</Link>
             </div>
           ) : (
             orders.map((order) => {
@@ -315,11 +317,11 @@ export default function Orders() {
                   <div className="customer-order-topline">
                     <div>
                       <h3 className="font-bold" style={{ color: '#f4f5ef', marginBottom: 4 }}>
-                        Order {order.orderCode || `#${order.orderNo || order._id.slice(-6)}`}
+                        {t('order')} {order.orderCode || `#${order.orderNo || order._id.slice(-6)}`}
                       </h3>
                       <div className="flex items-center gap-sm flex-wrap text-sm" style={{ color: '#9aa6a0' }}>
                         <span className="flex items-center gap-xs">
-                          <HiOutlineTable /> Table {order.table?.tableNumber || '-'}
+                          <HiOutlineTable /> {t('table')} {order.table?.tableNumber || '-'}
                         </span>
                         <span className="flex items-center gap-xs">
                           <HiOutlineClock /> {formatDateTime(order.createdAt)}
@@ -334,32 +336,32 @@ export default function Orders() {
                         ...getStatusStyle(orderStatus),
                       }}
                     >
-                      {orderStatus.replace('_', ' ')}
+                      {t(`status_${orderStatus}`)}
                     </span>
                   </div>
 
                   <div className="customer-order-body">
                     <div className="customer-order-items">
                       {visibleItems.length === 0 ? (
-                        <p className="text-sm" style={{ color: '#9aa6a0' }}>No item details available.</p>
+                        <p className="text-sm" style={{ color: '#9aa6a0' }}>{t('noItemDetails')}</p>
                       ) : (
                         visibleItems.map((item) => (
                           <div key={item._id || item.menuItem?._id || item.menuItem?.name} className="customer-order-item">
-                            <span>{item.quantity || 1}x {item.menuItem?.name || item.name || 'Menu item'}</span>
+                            <span>{item.quantity || 1}x {item.menuItem?.name || item.name || t('menuItem')}</span>
                             <strong>₹{(Number(item.price || 0) * Number(item.quantity || 0)).toLocaleString('en-IN')}</strong>
                           </div>
                         ))
                       )}
                       {(order.items?.length || 0) > visibleItems.length && (
                         <p className="text-xs" style={{ color: '#7f8a85', marginTop: 8 }}>
-                          +{order.items.length - visibleItems.length} more item(s)
+                          +{order.items.length - visibleItems.length} {t('moreItems')}
                         </p>
                       )}
                     </div>
 
                     <div className="customer-order-side">
                       <div>
-                        <p className="text-xs" style={{ color: '#8a9690', marginBottom: 4 }}>Total</p>
+                        <p className="text-xs" style={{ color: '#8a9690', marginBottom: 4 }}>{t('total')}</p>
                         <strong style={{ color: '#f4f5ef', fontSize: '1.3rem' }}>₹{orderTotal.toLocaleString('en-IN')}</strong>
                       </div>
                       <button
@@ -388,17 +390,17 @@ export default function Orders() {
                     >
                       {activeHelp ? <HiOutlineCheckCircle /> : <HiOutlineBell />}
                       {helpLoadingByOrder[order._id]
-                        ? activeHelp ? 'Closing...' : 'Sending...'
+                        ? activeHelp ? t('closing') : t('sending')
                         : activeHelp
-                          ? 'Close Help Request'
+                          ? t('closeHelpRequest')
                           : order.table?.status === 'available'
-                            ? 'Table Free'
-                            : 'Need Help'}
+                            ? t('tableFree')
+                            : t('needHelp')}
                     </button>
                     {hasAnyHelpHistory(order) && (
                       <p className="text-xs flex items-center gap-xs" style={{ color: activeHelp ? '#f0adad' : '#8a9690' }}>
                         <HiOutlineExclamation />
-                        Last help request: {latestHelp?.status || 'resolved'}
+                        {t('lastHelpRequest')}: {latestHelp?.status ? t(`status_${latestHelp.status}`) : t('resolved')}
                         {latestHelp?.createdAt ? ` · ${formatDateTime(latestHelp.createdAt)}` : ''}
                       </p>
                     )}

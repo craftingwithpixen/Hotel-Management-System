@@ -10,6 +10,7 @@ import {
 } from 'react-icons/hi';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import { getCustomerText } from '../../i18n/customerText';
 
 const goldButton = {
   border: '1px solid #d2c495',
@@ -30,14 +31,15 @@ const formatTxnDate = (date) => (
 );
 
 const getTier = (balance) => {
-  if (balance >= 5000) return { label: 'Platinum', next: null, target: 5000 };
-  if (balance >= 2000) return { label: 'Gold', next: 'Platinum', target: 5000 };
-  if (balance >= 750) return { label: 'Silver', next: 'Gold', target: 2000 };
-  return { label: 'Member', next: 'Silver', target: 750 };
+  if (balance >= 5000) return { labelKey: 'tierPlatinum', nextKey: null, target: 5000 };
+  if (balance >= 2000) return { labelKey: 'tierGold', nextKey: 'tierPlatinum', target: 5000 };
+  if (balance >= 750) return { labelKey: 'tierSilver', nextKey: 'tierGold', target: 2000 };
+  return { labelKey: 'tierMember', nextKey: 'tierSilver', target: 750 };
 };
 
 export default function Loyalty() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, preferredLang } = useAuthStore();
+  const t = getCustomerText(user?.preferredLang || preferredLang);
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function Loyalty() {
         setBalance(data.balance || 0);
         setTransactions(data.transactions || []);
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load loyalty details');
+        setError(err.response?.data?.message || t('failed'));
       } finally {
         setLoading(false);
       }
@@ -74,9 +76,9 @@ export default function Loyalty() {
           background: 'rgba(255,255,255,0.03)',
         }}
       >
-        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>Loyalty rewards</h2>
-        <p className="text-muted mb-lg">Sign in to view your points and redemptions.</p>
-        <Link className="btn btn-primary" to="/login" style={goldButton}>Sign In</Link>
+        <h2 className="text-2xl mb-sm" style={{ color: '#f4f5ef' }}>{t('loyaltyRewards')}</h2>
+        <p className="text-muted mb-lg">{t('loyaltySignInHelp')}</p>
+        <Link className="btn btn-primary" to="/login" style={goldButton}>{t('signIn')}</Link>
       </div>
     );
   }
@@ -90,7 +92,7 @@ export default function Loyalty() {
     return points < 0 ? sum + points : sum;
   }, 0));
   const tier = getTier(balance);
-  const progress = tier.next ? Math.min(100, Math.round((balance / tier.target) * 100)) : 100;
+  const progress = tier.nextKey ? Math.min(100, Math.round((balance / tier.target) * 100)) : 100;
 
   return (
     <div
@@ -107,17 +109,17 @@ export default function Loyalty() {
         <section className="customer-loyalty-hero">
           <div>
             <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 10 }}>
-              LOYALTY REWARDS
+              {t('loyaltyRewards')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.45rem, 3vw, 2.3rem)', lineHeight: 1.12, marginBottom: 12 }}>
-              Earn more from every visit
+              {t('loyaltyHeading')}
             </h1>
             <p style={{ color: '#b7c1bb', maxWidth: 560 }}>
-              Track your reward points, tier progress, and the latest activity from bookings and orders.
+              {t('loyaltyIntro')}
             </p>
           </div>
           <Link to="/customer/bookings" className="btn btn-primary" style={goldButton}>
-            Book Again <HiOutlineArrowRight />
+            {t('bookAgain')} <HiOutlineArrowRight />
           </Link>
         </section>
 
@@ -125,7 +127,7 @@ export default function Loyalty() {
           <div className="customer-loyalty-balance">
             <div className="flex items-center justify-between gap-md" style={{ marginBottom: 'var(--space-xl)' }}>
               <div>
-                <p style={{ color: '#8a9690', marginBottom: 6 }}>Available points</p>
+                <p style={{ color: '#8a9690', marginBottom: 6 }}>{t('availablePoints')}</p>
                 <strong>{balance.toLocaleString('en-IN')}</strong>
               </div>
               <span className="customer-loyalty-medal"><HiOutlineSparkles /></span>
@@ -134,10 +136,10 @@ export default function Loyalty() {
             <div className="customer-tier-panel">
               <div className="flex items-center justify-between gap-sm" style={{ marginBottom: 10 }}>
                 <span className="badge" style={{ background: 'rgba(181,167,118,0.2)', color: '#dfcf9f', border: '1px solid rgba(181,167,118,0.35)' }}>
-                  {tier.label}
+                  {t(tier.labelKey)}
                 </span>
                 <span style={{ color: '#8a9690', fontSize: '0.82rem' }}>
-                  {tier.next ? `${Math.max(tier.target - balance, 0).toLocaleString('en-IN')} to ${tier.next}` : 'Top tier'}
+                  {tier.nextKey ? `${Math.max(tier.target - balance, 0).toLocaleString('en-IN')} ${t('to')} ${t(tier.nextKey)}` : t('topTier')}
                 </span>
               </div>
               <div className="customer-tier-track">
@@ -150,14 +152,14 @@ export default function Loyalty() {
             <span><HiOutlineTrendingUp /></span>
             <div>
               <strong>{earnedPoints.toLocaleString('en-IN')}</strong>
-              <p>Points earned</p>
+              <p>{t('pointsEarned')}</p>
             </div>
           </div>
           <div className="customer-loyalty-stat">
             <span><HiOutlineGift /></span>
             <div>
               <strong>{redeemedPoints.toLocaleString('en-IN')}</strong>
-              <p>Redeemed</p>
+              <p>{t('redeemedPoints')}</p>
             </div>
           </div>
         </div>
@@ -167,7 +169,7 @@ export default function Loyalty() {
             className="card"
             style={{ borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', color: '#c5cdc8' }}
           >
-            Loading loyalty history...
+            {t('loadingLoyalty')}
           </div>
         )}
         {!loading && error && (
@@ -183,9 +185,9 @@ export default function Loyalty() {
           <section className="customer-loyalty-history">
             <div className="flex items-center justify-between gap-md" style={{ marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
               <div>
-                <h2 className="font-bold" style={{ color: '#f4f5ef', margin: 0, fontSize: '1.15rem' }}>Rewards history</h2>
+                <h2 className="font-bold" style={{ color: '#f4f5ef', margin: 0, fontSize: '1.15rem' }}>{t('rewardsHistory')}</h2>
                 <p style={{ color: '#8a9690', margin: '3px 0 0', fontSize: '0.9rem' }}>
-                  {transactions.length} transaction{transactions.length === 1 ? '' : 's'}
+                  {transactions.length} {transactions.length === 1 ? t('transaction') : t('transactions')}
                 </p>
               </div>
               <span className="customer-history-icon"><HiOutlineReceiptTax /></span>
@@ -194,8 +196,8 @@ export default function Loyalty() {
             {transactions.length === 0 ? (
               <div className="customer-loyalty-empty">
                 <HiOutlineHeart />
-                <p>No loyalty transactions yet.</p>
-                <Link to="/customer/scan" className="btn btn-primary" style={goldButton}>Start Ordering</Link>
+                <p>{t('noLoyaltyTransactions')}</p>
+                <Link to="/customer/scan" className="btn btn-primary" style={goldButton}>{t('startOrdering')}</Link>
               </div>
             ) : (
               <div className="customer-loyalty-list">
@@ -209,7 +211,7 @@ export default function Loyalty() {
                       </span>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <p className="font-semibold" style={{ color: '#f4f5ef', margin: 0 }}>
-                          {txn.note || txn.type || 'Loyalty update'}
+                          {txn.note || txn.type || t('loyaltyUpdate')}
                         </p>
                         <p className="text-xs" style={{ color: '#8a9690', margin: '3px 0 0' }}>
                           {formatTxnDate(txn.createdAt)}

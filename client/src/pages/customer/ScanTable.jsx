@@ -4,6 +4,7 @@ import { HiOutlineShoppingCart, HiOutlinePlus, HiOutlineMinus, HiOutlineCheckCir
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { getCustomerText } from '../../i18n/customerText';
 
 const CATEGORY_ICONS = {
   veg: HiOutlineSparkles,
@@ -26,7 +27,8 @@ const goldButton = {
 
 export default function ScanTable() {
   const { tableId } = useParams();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, preferredLang } = useAuthStore();
+  const t = getCustomerText(user?.preferredLang || preferredLang);
   const [tableData, setTableData] = useState(null);
   const [menu, setMenu] = useState([]);
   const [cart, setCart] = useState([]);
@@ -38,7 +40,7 @@ export default function ScanTable() {
   useEffect(() => {
     api.get(`/customer/scan/table/${tableId}`)
       .then(({ data }) => { setTableData(data.table); setMenu(data.menu || []); })
-      .catch(() => toast.error('Invalid table QR code'))
+      .catch(() => toast.error(t('invalidTableQr')))
       .finally(() => setLoading(false));
   }, [tableId]);
 
@@ -57,8 +59,8 @@ export default function ScanTable() {
   const cartTotal = cart.reduce((s, c) => s + c.menuItem.price * c.quantity, 0);
 
   const placeOrder = async () => {
-    if (cart.length === 0) return toast.error('Add at least one item');
-    if (!isAuthenticated) return toast.error('Please login to place an order');
+    if (cart.length === 0) return toast.error(t('addAtLeastOneItem'));
+    if (!isAuthenticated) return toast.error(t('pleaseLoginOrder'));
     setSubmitting(true);
     try {
       await api.post('/orders', {
@@ -68,9 +70,9 @@ export default function ScanTable() {
         customerId: user?._id,
       });
       setSubmitted(true);
-      toast.success('Order placed! Kitchen is preparing your food');
+      toast.success(t('orderPlaced'));
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to place order');
+      toast.error(err?.response?.data?.message || t('failed'));
     } finally { setSubmitting(false); }
   };
 
@@ -105,16 +107,16 @@ export default function ScanTable() {
         }}
       >
         <HiOutlineCheckCircle style={{ fontSize: '5rem', color: '#8dd7b5', marginBottom: 'var(--space-lg)' }} />
-        <h2 className="font-bold text-xl" style={{ marginBottom: 'var(--space-sm)' }}>Order Placed!</h2>
+        <h2 className="font-bold text-xl" style={{ marginBottom: 'var(--space-sm)' }}>{t('orderPlaced')}</h2>
         <p style={{ textAlign: 'center', color: '#b7c1bb', maxWidth: 520 }}>
-          Your order for <strong>{tableData?.hotel?.name}</strong> · Table <strong>{tableData?.tableNumber}</strong> is being prepared.
+          {t('orderPlacedMessage')} <strong>{tableData?.hotel?.name}</strong> · {t('table')} <strong>{tableData?.tableNumber}</strong>
         </p>
         <button
           type="button"
           style={{ ...goldButton, marginTop: 'var(--space-xl)', padding: '0.66rem 1.35rem' }}
           onClick={() => { setSubmitted(false); setCart([]); }}
         >
-          Order More
+          {t('orderMore')}
         </button>
       </div>
     );
@@ -144,13 +146,13 @@ export default function ScanTable() {
         >
           <div style={{ padding: '1.75rem' }}>
             <p style={{ fontSize: '0.7rem', letterSpacing: '0.24em', color: '#d8c69b', marginBottom: 8 }}>
-              SCAN & ORDER
+              {t('scanAndOrder')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', lineHeight: 1.15, marginBottom: 8 }}>
               {tableData?.hotel?.name || 'Grand Paradise'}
             </h1>
             <p style={{ color: '#c5cdc8' }}>
-              Table {tableData?.tableNumber} · Fresh food, quick service, and real-time kitchen updates.
+              {t('table')} {tableData?.tableNumber} · {t('scanOrderIntro')}
             </p>
           </div>
         </div>
@@ -189,7 +191,7 @@ export default function ScanTable() {
               }}
             >
               {Icon ? <Icon style={{ marginRight: 6 }} /> : null}
-              {c === 'all' ? 'All' : c.replace('_', ' ')}
+              {c === 'all' ? t('all') : c.replace('_', ' ')}
             </button>
             );
           })}
@@ -207,7 +209,7 @@ export default function ScanTable() {
                   color: '#b7c1bb',
                 }}
               >
-                No menu items found in this category.
+                {t('noMenuInCategory')}
               </div>
             ) : (
               filtered.map((item) => (
@@ -244,7 +246,7 @@ export default function ScanTable() {
                         fontSize: '0.8rem',
                       }}
                     >
-                      No image
+                      {t('noImage')}
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -289,7 +291,7 @@ export default function ScanTable() {
                         </div>
                       ) : (
                         <button type="button" onClick={() => addToCart(item)} style={goldButton}>
-                          <HiOutlinePlus /> Add
+                          <HiOutlinePlus /> {t('add')}
                         </button>
                       )}
                     </div>
@@ -313,16 +315,16 @@ export default function ScanTable() {
               <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-sm)' }}>
                 <div className="flex items-center gap-sm">
                   <HiOutlineShoppingCart style={{ color: '#dfcf9f' }} />
-                  <span className="font-semibold">Your Cart</span>
+                  <span className="font-semibold">{t('yourCart')}</span>
                 </div>
                 <span style={{ color: '#8a9690', fontSize: '0.85rem' }}>
-                  {cart.reduce((s, c) => s + c.quantity, 0)} items
+                  {cart.reduce((s, c) => s + c.quantity, 0)} {t('items')}
                 </span>
               </div>
 
               {cart.length === 0 ? (
                 <p style={{ color: '#8a9690', fontSize: '0.9rem', marginBottom: 0 }}>
-                  Add menu items to start your order.
+                  {t('addMenuItems')}
                 </p>
               ) : (
                 <>
@@ -343,7 +345,7 @@ export default function ScanTable() {
                   </div>
 
                   <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-md)' }}>
-                    <span className="font-semibold">Total</span>
+                    <span className="font-semibold">{t('total')}</span>
                     <span className="font-bold text-lg" style={{ color: '#e9bf47' }}>
                       ₹{cartTotal.toLocaleString('en-IN')}
                     </span>
@@ -358,12 +360,12 @@ export default function ScanTable() {
                 disabled={submitting || cart.length === 0}
                 style={{ ...goldButton, width: '100%', justifyContent: 'center', opacity: submitting || cart.length === 0 ? 0.6 : 1 }}
               >
-                {submitting ? 'Placing Order...' : 'Place Order'}
+                {submitting ? t('placingOrder') : t('placeOrder')}
               </button>
               {!isAuthenticated && (
                 <div className="text-xs" style={{ textAlign: 'center', marginTop: 8, color: '#8a9690' }}>
-                  You need to be logged in to place an order.{' '}
-                  <a href="/login" style={{ color: '#dfcf9f' }}>Login</a>
+                  {t('loginToOrder')}{' '}
+                  <a href="/login" style={{ color: '#dfcf9f' }}>{t('login')}</a>
                 </div>
               )}
             </div>

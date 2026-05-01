@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import { getCustomerText } from '../../i18n/customerText';
 
 const goldButton = {
   border: '1px solid #d2c495',
@@ -24,7 +25,8 @@ const inputDark = {
 };
 
 export default function BookRoom() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user, preferredLang } = useAuthStore();
+  const t = getCustomerText(user?.preferredLang || preferredLang);
   const navigate = useNavigate();
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
@@ -39,11 +41,11 @@ export default function BookRoom() {
 
   const searchRooms = async () => {
     if (!canSearch) {
-      toast.error('Please choose check-in and check-out dates');
+      toast.error(t('chooseStayDates'));
       return;
     }
     if (new Date(checkIn) >= new Date(checkOut)) {
-      toast.error('Check-out must be after check-in');
+      toast.error(t('checkoutAfterCheckin'));
       return;
     }
 
@@ -54,7 +56,7 @@ export default function BookRoom() {
       });
       setRooms(data.rooms || []);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to fetch available rooms');
+      toast.error(err.response?.data?.message || t('failed'));
     } finally {
       setLoading(false);
     }
@@ -66,11 +68,11 @@ export default function BookRoom() {
       return;
     }
     if (!checkIn || !checkOut) {
-      toast.error('Please select your stay dates first');
+      toast.error(t('selectStayDates'));
       return;
     }
     if (new Date(checkIn) >= new Date(checkOut)) {
-      toast.error('Check-out must be after check-in');
+      toast.error(t('checkoutAfterCheckin'));
       return;
     }
 
@@ -83,10 +85,10 @@ export default function BookRoom() {
         guestCount: Number(guestCount),
         specialRequests,
       });
-      toast.success('Room booked successfully');
+      toast.success(t('roomBooked'));
       navigate('/customer/bookings');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Booking failed');
+      toast.error(err.response?.data?.message || t('bookingFailed'));
     } finally {
       setBookingRoomId(null);
     }
@@ -120,17 +122,17 @@ export default function BookRoom() {
               to="/customer"
               style={{ fontSize: '0.8rem', color: '#d8c69b', textDecoration: 'none' }}
             >
-              ← Home
+              ← {t('backHome')}
             </Link>
           </div>
           <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 10 }}>
-            BOOK YOUR PERFECT STAY
+            {t('bookRoomEyebrow')}
           </p>
           <h1 className="font-bold" style={{ fontSize: 'clamp(1.75rem, 4vw, 2.75rem)', lineHeight: 1.1, marginBottom: 10 }}>
-            Comfortable Stays, Just a Click Away
+            {t('bookRoomHeading')}
           </h1>
           <p style={{ color: '#c5cdc8', maxWidth: 520, fontSize: '1.02rem' }}>
-            Find available rooms, compare rates, and reserve your stay with instant confirmation.
+            {t('bookRoomIntro')}
           </p>
         </div>
       </div>
@@ -144,11 +146,11 @@ export default function BookRoom() {
         }}
       >
         <p style={{ fontSize: '0.72rem', letterSpacing: '0.2em', color: '#d8c69b', marginBottom: 14 }}>
-          SEARCH AVAILABILITY
+          {t('searchAvailability')}
         </p>
         <div className="grid grid-2 gap-md">
           <div className="input-group">
-            <label style={{ color: '#b8c2bd' }}>Check-in Date</label>
+            <label style={{ color: '#b8c2bd' }}>{t('checkInDate')}</label>
             <input
               className="input"
               type="date"
@@ -158,7 +160,7 @@ export default function BookRoom() {
             />
           </div>
           <div className="input-group">
-            <label style={{ color: '#b8c2bd' }}>Check-out Date</label>
+            <label style={{ color: '#b8c2bd' }}>{t('checkOutDate')}</label>
             <input
               className="input"
               type="date"
@@ -168,17 +170,17 @@ export default function BookRoom() {
             />
           </div>
           <div className="input-group">
-            <label style={{ color: '#b8c2bd' }}>Room Type</label>
+            <label style={{ color: '#b8c2bd' }}>{t('roomType')}</label>
             <select className="input" value={type} onChange={(e) => setType(e.target.value)} style={inputDark}>
-              <option value="">All Types</option>
-              <option value="single">Single</option>
-              <option value="double">Double</option>
-              <option value="deluxe">Deluxe</option>
-              <option value="suite">Suite</option>
+              <option value="">{t('allTypes')}</option>
+              <option value="single">{t('single')}</option>
+              <option value="double">{t('double')}</option>
+              <option value="deluxe">{t('deluxe')}</option>
+              <option value="suite">{t('suite')}</option>
             </select>
           </div>
           <div className="input-group">
-            <label style={{ color: '#b8c2bd' }}>Guests</label>
+            <label style={{ color: '#b8c2bd' }}>{t('guests')}</label>
             <input
               className="input"
               type="number"
@@ -189,12 +191,12 @@ export default function BookRoom() {
             />
           </div>
           <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-            <label style={{ color: '#b8c2bd' }}>Special Requests (optional)</label>
+            <label style={{ color: '#b8c2bd' }}>{t('specialRequestsOptional')}</label>
             <textarea
               className="input"
               value={specialRequests}
               onChange={(e) => setSpecialRequests(e.target.value)}
-              placeholder="Late check-in, extra pillows, etc."
+              placeholder={t('specialRequestsPlaceholder')}
               style={inputDark}
             />
           </div>
@@ -206,7 +208,7 @@ export default function BookRoom() {
             onClick={searchRooms}
             disabled={loading}
           >
-            {loading ? 'Searching...' : 'Search Available Rooms'}
+            {loading ? t('searching') : t('searchRooms')}
           </button>
           <Link
             to="/customer/bookings"
@@ -218,13 +220,13 @@ export default function BookRoom() {
               color: '#f4f5ef',
             }}
           >
-            My Bookings
+            {t('myBookings')}
           </Link>
         </div>
       </div>
 
       <p style={{ fontSize: '0.72rem', letterSpacing: '0.2em', color: '#d8c69b', marginBottom: 12 }}>
-        AVAILABLE ROOMS
+        {t('availableRooms')}
       </p>
       <div className="grid grid-auto gap-lg">
         {rooms.length === 0 ? (
@@ -238,7 +240,7 @@ export default function BookRoom() {
             }}
           >
             <p className="text-muted" style={{ margin: 0 }}>
-              No rooms loaded yet. Pick dates and search availability.
+              {t('noRoomsLoaded')}
             </p>
           </div>
         ) : (
@@ -274,14 +276,14 @@ export default function BookRoom() {
                     fontSize: '0.875rem',
                   }}
                 >
-                  Room {room.roomNumber}
+                  {t('room')} {room.roomNumber}
                 </div>
               )}
 
               <div style={{ padding: 'var(--space-lg)' }}>
                 <div className="flex justify-between items-center mb-sm">
                   <h3 className="font-bold text-lg" style={{ color: '#f4f5ef' }}>
-                    Room {room.roomNumber}
+                    {t('room')} {room.roomNumber}
                   </h3>
                   <span
                     className="badge"
@@ -295,10 +297,10 @@ export default function BookRoom() {
                   </span>
                 </div>
                 <p className="text-sm mb-xs" style={{ color: '#a8b3ad', textTransform: 'capitalize' }}>
-                  {room.type} · {room.capacity} guest{room.capacity > 1 ? 's' : ''}
+                  {t(room.type) || room.type} · {room.capacity} {t('guests')}
                 </p>
                 <p className="text-sm mb-md" style={{ color: '#8a9690' }}>
-                  Check-in {room.checkInTime || '14:00'} · Check-out {room.checkOutTime || '11:00'}
+                  {t('checkIn')} {room.checkInTime || '14:00'} · {t('checkOut')} {room.checkOutTime || '11:00'}
                 </p>
                 <div className="flex justify-between items-center">
                   <div>
@@ -307,7 +309,7 @@ export default function BookRoom() {
                     </span>
                     <span className="text-sm" style={{ color: '#8a9690' }}>
                       {' '}
-                      / night
+                      / {t('night')}
                     </span>
                   </div>
                   <button
@@ -316,7 +318,7 @@ export default function BookRoom() {
                     onClick={() => handleBook(room._id)}
                     disabled={bookingRoomId === room._id}
                   >
-                    {bookingRoomId === room._id ? 'Booking...' : 'Book Now'}
+                    {bookingRoomId === room._id ? t('booking') : t('bookNow')}
                   </button>
                 </div>
               </div>
