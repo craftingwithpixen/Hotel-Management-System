@@ -36,6 +36,7 @@ module.exports = (io) => {
     // Join waiter room
     socket.on("join:waiter", () => {
       if (user) {
+        socket.join("waiter");
         socket.join(`waiter:${user.id}`);
       }
     });
