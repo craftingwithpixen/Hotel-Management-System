@@ -117,17 +117,10 @@ export default function BookRoom() {
         <div style={{ padding: '2rem 1.75rem', maxWidth: 720 }}>
           <div className="flex items-center gap-sm" style={{ marginBottom: 14, flexWrap: 'wrap' }}>
             <Link
-              to="/"
-              style={{ fontSize: '0.8rem', color: '#d8c69b', textDecoration: 'none' }}
-            >
-              ← Home
-            </Link>
-            <span style={{ color: 'rgba(255,255,255,0.25)' }}>|</span>
-            <Link
               to="/customer"
               style={{ fontSize: '0.8rem', color: '#d8c69b', textDecoration: 'none' }}
             >
-              Home
+              ← Home
             </Link>
           </div>
           <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#d8c69b', marginBottom: 10 }}>
