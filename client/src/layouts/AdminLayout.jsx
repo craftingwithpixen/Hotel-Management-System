@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineHome, HiOutlineUsers, HiOutlineClipboardList, HiOutlineChartBar, HiOutlineCog, HiOutlineLogout, HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCollection, HiOutlineShoppingCart, HiOutlineCurrencyRupee, HiOutlineBell, HiOutlineMenu } from 'react-icons/hi';
+import { HiOutlineHome, HiOutlineUsers, HiOutlineClipboardList, HiOutlineCog, HiOutlineLogout, HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCollection, HiOutlineShoppingCart, HiOutlineCurrencyRupee, HiOutlineBell, HiOutlineMenu } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
 
@@ -13,7 +13,7 @@ const menuItems = [
   { path: '/admin/staff', icon: HiOutlineUsers, label: 'Staff' },
   { path: '/admin/inventory', icon: HiOutlineViewGrid, label: 'Inventory' },
   { path: '/admin/billing', icon: HiOutlineCurrencyRupee, label: 'Billing' },
-  { path: '/admin/reports', icon: HiOutlineChartBar, label: 'Reports' },
+  // { path: '/admin/reports', icon: HiOutlineChartBar, label: 'Reports' },
   { path: '/admin/settings', icon: HiOutlineCog, label: 'Settings' },
 ];
 
