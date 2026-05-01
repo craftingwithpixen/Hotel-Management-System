@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlineCalendar, HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineCalendar, HiOutlineTrash, HiOutlineX } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -133,7 +133,7 @@ export default function Staff() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Add New Staff</h2>
-              <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>✕</button>
+              <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}><HiOutlineX /></button>
             </div>
             <form
               onSubmit={async (e) => {

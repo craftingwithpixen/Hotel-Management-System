@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { HiOutlineViewGrid } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -96,7 +97,7 @@ export default function Orders() {
             <div key={order._id} className="card" style={{ borderTop: `3px solid ${statusColors[order.overallStatus] || '#64748b'}` }}>
               <div className="flex items-center justify-between mb-md">
                 <div className="flex items-center gap-sm">
-                  <span style={{ fontSize: '1.5rem' }}>🪑</span>
+                  <HiOutlineViewGrid style={{ fontSize: '1.5rem' }} />
                   <div>
                     <div className="font-bold text-lg">{order.table?.tableNumber || '—'}</div>
                     <div className="text-xs text-muted">by {order.waiter?.name || '—'} · {timeAgo(order.createdAt)}</div>

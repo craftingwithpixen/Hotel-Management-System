@@ -31,7 +31,7 @@ export default function KitchenBoard() {
 
     // Listen for real-time new orders
     const offNew = on('new:order', (order) => {
-      toast('🍽️ New order arrived!', { icon: '🔔' });
+      toast('New order arrived');
       fetchOrders();
     });
     const offUpdate = on('order:update', () => fetchOrders());
@@ -77,7 +77,7 @@ export default function KitchenBoard() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>🍳 Kitchen Board</h1>
+          <h1>Kitchen Board</h1>
           <p className="text-muted">{orders.length} active orders · auto-refreshes every 30s</p>
         </div>
         <button className="btn btn-outline" onClick={fetchOrders}>Refresh</button>
@@ -168,7 +168,7 @@ export default function KitchenBoard() {
                   )}
                   {col.key === 'ready' && (
                     <div className="badge badge-success" style={{ width: '100%', justifyContent: 'center', padding: '0.5rem' }}>
-                      Notify waiter to collect ✓
+                      Notify waiter to collect
                     </div>
                   )}
                 </div>

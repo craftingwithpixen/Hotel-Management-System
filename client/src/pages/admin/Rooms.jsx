@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlinePencil, HiOutlineTrash, HiOutlineOfficeBuilding, HiOutlineStar, HiOutlineSparkles, HiOutlineUserGroup, HiOutlineX } from 'react-icons/hi';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
@@ -160,7 +160,7 @@ export default function Rooms() {
 
   const statusColor = { available: 'success', booked: 'primary', maintenance: 'warning' };
   const cleanColor = { clean: 'success', dirty: 'danger', in_progress: 'warning' };
-  const typeEmoji = { single: '🛏️', double: '🛏️🛏️', deluxe: '✨', suite: '👑' };
+  const typeIcon = { single: HiOutlineOfficeBuilding, double: HiOutlineUserGroup, deluxe: HiOutlineSparkles, suite: HiOutlineStar };
 
   if (!canManageRooms) {
     return (
@@ -231,7 +231,7 @@ export default function Rooms() {
             )}
             <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-md)' }}>
               <div className="flex items-center gap-sm">
-                <span style={{ fontSize: '1.5rem' }}>{typeEmoji[room.type]}</span>
+                <span style={{ fontSize: '1.5rem' }}>{typeIcon[room.type] ? (() => { const Icon = typeIcon[room.type]; return <Icon />; })() : null}</span>
                 <div>
                   <div className="font-bold text-lg">Room {room.roomNumber}</div>
                   <div className="text-xs text-muted" style={{ textTransform: 'capitalize' }}>Floor {room.floor} · {room.type}</div>
@@ -277,7 +277,7 @@ export default function Rooms() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editRoom ? 'Edit Room' : 'Add New Room'}</h2>
-              <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>✕</button>
+              <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}><HiOutlineX /></button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-2 gap-md" style={{ marginBottom: 'var(--space-lg)' }}>

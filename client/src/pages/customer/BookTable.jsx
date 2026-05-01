@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   HiOutlineViewGrid, HiOutlineSearch, HiOutlineCalendar, HiOutlineClock,
-  HiOutlineUsers, HiOutlineCheckCircle,
+  HiOutlineUsers, HiOutlineCheckCircle, HiOutlineSparkles, HiOutlineCube,
 } from 'react-icons/hi';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
@@ -69,7 +69,7 @@ export default function BookTable() {
     return (
       <div className="animate-fade" style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}>
         <div className="card" style={{ maxWidth: 440, textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🎉</div>
+          <HiOutlineSparkles style={{ fontSize: '3rem', marginBottom: 'var(--space-md)', color: 'var(--success)' }} />
           <h2 className="font-bold mb-sm">Table Booked!</h2>
           <p className="text-muted mb-lg">Your reservation is confirmed. We look forward to seeing you!</p>
           <div className="card" style={{ background: 'var(--bg-tertiary)', textAlign: 'left', marginBottom: 'var(--space-lg)' }}>
@@ -99,7 +99,7 @@ export default function BookTable() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>🪑 Book a Table</h1>
+          <h1>Book a Table</h1>
           <p className="text-muted">Reserve your dining spot — pick a table and time</p>
         </div>
       </div>
@@ -163,7 +163,7 @@ export default function BookTable() {
                     {isSel && (
                       <HiOutlineCheckCircle style={{ position: 'absolute', top: 12, right: 12, color: 'var(--primary)', fontSize: '1.25rem' }} />
                     )}
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>🪑</div>
+                    <HiOutlineCube style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }} />
                     <div className="font-bold text-lg">{table.tableNumber}</div>
                     <div className="text-xs text-muted mb-sm">{table.location || 'Indoor'}</div>
                     <div className="flex items-center justify-between">
@@ -217,7 +217,7 @@ export default function BookTable() {
                 onClick={handleBook}
                 disabled={booking || !date || !time}
               >
-                {booking ? 'Booking…' : '✓ Confirm Reservation'}
+                {booking ? 'Booking...' : <><HiOutlineCheckCircle /> Confirm Reservation</>}
               </button>
             </>
           )}

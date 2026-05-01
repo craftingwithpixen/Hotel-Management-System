@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { HiOutlineShoppingCart, HiOutlinePlus, HiOutlineMinus, HiOutlineCheckCircle } from 'react-icons/hi';
+import { HiOutlineShoppingCart, HiOutlinePlus, HiOutlineMinus, HiOutlineCheckCircle, HiOutlineSparkles, HiOutlineCollection, HiOutlineOfficeBuilding, HiOutlineHome } from 'react-icons/hi';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
 
-const CATEGORY_ICONS = { veg: '🥗', non_veg: '🍗', drinks: '🥤', dessert: '🍰', combo: '🎁' };
+const CATEGORY_ICONS = {
+  veg: HiOutlineSparkles,
+  non_veg: HiOutlineCollection,
+  drinks: HiOutlineCollection,
+  dessert: HiOutlineHome,
+  combo: HiOutlineOfficeBuilding,
+};
 const goldButton = {
   border: '1px solid #d2c495',
   background: 'linear-gradient(90deg, #b5a776, #958657)',
@@ -62,7 +68,7 @@ export default function ScanTable() {
         customerId: user?._id,
       });
       setSubmitted(true);
-      toast.success('Order placed! Kitchen is preparing your food 🍳');
+      toast.success('Order placed! Kitchen is preparing your food');
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to place order');
     } finally { setSubmitting(false); }
@@ -161,7 +167,9 @@ export default function ScanTable() {
             background: 'rgba(255,255,255,0.03)',
           }}
         >
-          {categories.map((c) => (
+          {categories.map((c) => {
+            const Icon = CATEGORY_ICONS[c];
+            return (
             <button
               key={c}
               type="button"
@@ -180,9 +188,11 @@ export default function ScanTable() {
                 transition: 'all 0.2s',
               }}
             >
-              {CATEGORY_ICONS[c] || ''} {c === 'all' ? 'All' : c.replace('_', ' ')}
+              {Icon ? <Icon style={{ marginRight: 6 }} /> : null}
+              {c === 'all' ? 'All' : c.replace('_', ' ')}
             </button>
-          ))}
+            );
+          })}
         </div>
 
         <div className="scan-table-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 'var(--space-md)' }}>

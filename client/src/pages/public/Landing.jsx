@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { HiOutlineOfficeBuilding, HiOutlineHome, HiOutlineTruck } from 'react-icons/hi';
+import { HiOutlineOfficeBuilding, HiOutlineHome, HiOutlineTruck, HiOutlineCollection, HiOutlineStar } from 'react-icons/hi';
 import useAuthStore from '../../store/authStore';
 
 const exploreCards = [
-  { icon: '🏨', title: 'Hotels', description: 'Comfortable stays at the best prices' },
-  { icon: '🍽️', title: 'Restaurants', description: 'Order from top-rated places' },
-  { icon: '🛎️', title: 'Room Service', description: 'Get food delivered to your room' },
+  { icon: HiOutlineOfficeBuilding, title: 'Hotels', description: 'Comfortable stays at the best prices' },
+  { icon: HiOutlineCollection, title: 'Restaurants', description: 'Order from top-rated places' },
+  { icon: HiOutlineTruck, title: 'Room Service', description: 'Get food delivered to your room' },
 ];
 
 const featuredListings = [
@@ -68,7 +68,7 @@ export default function Landing() {
           >
             <div className="flex items-center gap-sm">
               <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#f7ad23', boxShadow: '0 0 14px rgba(247,173,35,0.8)' }} />
-              <span className="font-bold text-lg">Spicyhunt</span>
+              <span className="font-bold text-lg">Grand Paradise</span>
             </div>
             <nav className="hide-mobile flex gap-lg text-sm" style={{ color: '#dce2dc' }}>
               <a href="#hero" style={{ color: 'inherit', textDecoration: 'none' }}>Home</a>
@@ -166,7 +166,7 @@ export default function Landing() {
                       boxShadow: '0 12px 24px rgba(0,0,0,0.28)',
                     }}
                   >
-                    <div style={{ fontSize: '1.35rem', marginBottom: 8 }}>{item.icon}</div>
+                    <div style={{ fontSize: '1.35rem', marginBottom: 8 }}><item.icon /></div>
                     <h3 className="font-semibold" style={{ marginBottom: 6, fontSize: '1.12rem' }}>{item.title}</h3>
                     <p className="text-sm text-muted" style={{ lineHeight: 1.55 }}>{item.description}</p>
                   </div>
@@ -246,7 +246,7 @@ export default function Landing() {
                 </span>
                 <h3 className="font-bold" style={{ marginBottom: 8, fontSize: '1.16rem' }}>{item.name}</h3>
                 <p className="text-sm" style={{ color: '#c2cbc6' }}>
-                  <span style={{ color: '#e9bf47' }}>★</span> {item.rating} - {item.detail}
+                  <HiOutlineStar style={{ color: '#e9bf47', display: 'inline', marginRight: 4 }} /> {item.rating} - {item.detail}
                 </p>
               </div>
             </article>

@@ -5,7 +5,7 @@ import {
   HiOutlineHome, HiOutlineShoppingCart, HiOutlineClipboardList,
   HiOutlineLogout, HiOutlineMenu, HiOutlineBell, HiOutlineCollection,
   HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCurrencyRupee,
-  HiOutlineKey, HiOutlineUsers,
+  HiOutlineKey, HiOutlineUsers, HiOutlineUser,
 } from 'react-icons/hi';
 
 const roleMenus = {
@@ -67,7 +67,7 @@ export default function StaffLayout() {
             borderRadius: 'var(--radius-lg)', display: 'flex',
             alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem',
           }}>
-            {user?.role === 'chef' ? '👨‍🍳' : user?.role === 'waiter' ? '🍽️' : user?.role === 'receptionist' ? '🏨' : '🏢'}
+            <HiOutlineUser />
           </div>
           <div>
             <h1>Grand Paradise</h1>
@@ -119,7 +119,7 @@ export default function StaffLayout() {
             </button>
             <div>
               <h2 className="text-lg font-bold">
-                Welcome, {user?.name?.split(' ')[0]} 👋
+                Welcome, {user?.name?.split(' ')[0]}
               </h2>
               <p className="text-xs text-muted">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { HiOutlineMail } from 'react-icons/hi';
 
 export default function OTPVerify() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -43,7 +44,7 @@ export default function OTPVerify() {
     <div className="flex items-center justify-center" style={{ minHeight: '100vh', background: 'var(--gradient-hero)' }}>
       <div className="card-glass animate-slide-up" style={{ width: '100%', maxWidth: 440, padding: 'var(--space-2xl)' }}>
         <div className="text-center" style={{ marginBottom: 'var(--space-2xl)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>📧</div>
+          <HiOutlineMail style={{ fontSize: '3rem', marginBottom: 'var(--space-md)', color: 'var(--primary-light)' }} />
           <h1 className="font-display text-2xl font-bold" style={{ marginBottom: 'var(--space-xs)' }}>Verify Email</h1>
           <p className="text-muted text-sm">We sent a code to <strong style={{ color: 'var(--text-primary)' }}>{email}</strong></p>
         </div>

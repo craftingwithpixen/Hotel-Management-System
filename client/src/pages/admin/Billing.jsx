@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   HiOutlineDownload, HiOutlinePrinter, HiOutlineSearch,
   HiOutlineCurrencyRupee, HiOutlineRefresh, HiOutlinePlus,
-  HiOutlineTag, HiOutlineStar, HiOutlineUsers,
+  HiOutlineTag, HiOutlineStar, HiOutlineUsers, HiOutlineX, HiOutlineCheckCircle,
 } from 'react-icons/hi';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -224,7 +224,7 @@ export default function Billing() {
             <div className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
                 <h3 className="font-bold">Bill Detail</h3>
-                <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setSelected(null)}>✕</button>
+                <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setSelected(null)}><HiOutlineX /></button>
               </div>
               <div style={{ fontSize: '0.875rem', display: 'grid', gap: 8 }}>
                 {(selected.items || []).map((item, i) => (
@@ -252,7 +252,7 @@ export default function Billing() {
               )}
               {selected.status === 'paid' && (
                 <div className="badge badge-success" style={{ marginTop: 'var(--space-md)', width: '100%', justifyContent: 'center', padding: 'var(--space-sm)' }}>
-                  ✓ Paid on {new Date(selected.paidAt).toLocaleDateString('en-IN')}
+                  <HiOutlineCheckCircle /> Paid on {new Date(selected.paidAt).toLocaleDateString('en-IN')}
                 </div>
               )}
             </div>

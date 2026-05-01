@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineEye, HiOutlineEyeOff, HiOutlineSparkles, HiOutlineCollection, HiOutlineHome, HiOutlineOfficeBuilding, HiOutlineX } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
 const catCfg = {
-  veg: { emoji: '🥬', color: '#10b981', label: 'Veg' },
-  non_veg: { emoji: '🍗', color: '#ef4444', label: 'Non-Veg' },
-  drinks: { emoji: '🥤', color: '#3b82f6', label: 'Drinks' },
-  dessert: { emoji: '🍰', color: '#f59e0b', label: 'Dessert' },
-  combo: { emoji: '🎁', color: '#8b5cf6', label: 'Combo' },
+  veg: { icon: HiOutlineSparkles, color: '#10b981', label: 'Veg' },
+  non_veg: { icon: HiOutlineCollection, color: '#ef4444', label: 'Non-Veg' },
+  drinks: { icon: HiOutlineCollection, color: '#3b82f6', label: 'Drinks' },
+  dessert: { icon: HiOutlineHome, color: '#f59e0b', label: 'Dessert' },
+  combo: { icon: HiOutlineOfficeBuilding, color: '#8b5cf6', label: 'Combo' },
 };
 
 export default function MenuPage() {
@@ -86,7 +86,7 @@ export default function MenuPage() {
         <div className="tabs">
           <button className={`tab ${!activeCat ? 'active' : ''}`} onClick={() => setActiveCat('')}>All</button>
           {Object.entries(catCfg).map(([k, v]) => (
-            <button key={k} className={`tab ${activeCat === k ? 'active' : ''}`} onClick={() => setActiveCat(k)}>{v.emoji} {v.label}</button>
+            <button key={k} className={`tab ${activeCat === k ? 'active' : ''}`} onClick={() => setActiveCat(k)}><v.icon /> {v.label}</button>
           ))}
         </div>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
@@ -105,7 +105,7 @@ export default function MenuPage() {
           const c = catCfg[item.category] || catCfg.veg;
           return (
             <div key={item._id} className="card card-hover" style={{ opacity: item.isAvailable ? 1 : 0.6 }}>
-              <div style={{ height: 100, background: `linear-gradient(135deg, ${c.color}22, ${c.color}08)`, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>{c.emoji}</div>
+              <div style={{ height: 100, background: `linear-gradient(135deg, ${c.color}22, ${c.color}08)`, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}><c.icon /></div>
               <div className="flex items-start justify-between mb-sm">
                 <div><h3 className="font-bold">{item.name}</h3><span className="badge" style={{ background: `${c.color}20`, color: c.color }}>{c.label}</span></div>
                 <div className="text-xl font-bold" style={{ color: 'var(--accent)' }}>₹{item.price}</div>
@@ -125,7 +125,7 @@ export default function MenuPage() {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header"><h2>Add Item</h2><button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>✕</button></div>
+            <div className="modal-header"><h2>Add Item</h2><button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}><HiOutlineX /></button></div>
             <form onSubmit={submit}>
               <div className="input-group mb-md"><label>Name</label><input className="input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required /></div>
               <div className="grid grid-2 gap-md mb-md">

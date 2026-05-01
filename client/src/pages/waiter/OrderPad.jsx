@@ -89,7 +89,7 @@ export default function OrderPad() {
       {/* Left — Menu */}
       <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div className="page-header" style={{ flexShrink: 0 }}>
-          <div><h1>🍽️ Order Pad</h1><p className="text-muted">Select table, then add items</p></div>
+          <div><h1>Order Pad</h1><p className="text-muted">Select table, then add items</p></div>
         </div>
 
         {/* Table Select */}

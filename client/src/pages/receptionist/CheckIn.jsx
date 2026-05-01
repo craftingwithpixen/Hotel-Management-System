@@ -47,7 +47,7 @@ export default function CheckIn() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>🔑 Check In / Out</h1>
+          <h1>Check In / Out</h1>
           <p className="text-muted">Manage room arrivals and departures</p>
         </div>
         <button className="btn btn-outline" onClick={fetchBookings}><HiOutlineRefresh /> Refresh</button>

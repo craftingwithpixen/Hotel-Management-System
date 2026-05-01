@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCollection,
-  HiOutlineClipboardList, HiOutlineRefresh,
+  HiOutlineClipboardList, HiOutlineRefresh, HiOutlineCheckCircle,
 } from 'react-icons/hi';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -56,7 +56,7 @@ export default function ManagerDashboard() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>🏢 Manager Dashboard</h1>
+          <h1>Manager Dashboard</h1>
           <p className="text-muted">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
         <button className="btn btn-outline" onClick={() => window.location.reload()}><HiOutlineRefresh /> Refresh</button>
@@ -104,7 +104,7 @@ export default function ManagerDashboard() {
           </h3>
           {lowStock.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
-              ✅ All inventory levels are sufficient
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><HiOutlineCheckCircle /> All inventory levels are sufficient</span>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', maxHeight: 240, overflowY: 'auto' }}>

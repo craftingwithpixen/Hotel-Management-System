@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
-import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
+import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff, HiOutlineOfficeBuilding } from 'react-icons/hi';
 
 export default function Login() {
   const [isStaff, setIsStaff] = useState(true);
@@ -36,7 +36,7 @@ export default function Login() {
 
       <div className="card-glass animate-slide-up" style={{ width: '100%', maxWidth: 440, padding: 'var(--space-2xl)' }}>
         <div className="text-center" style={{ marginBottom: 'var(--space-2xl)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)' }}>🏨</div>
+          <HiOutlineOfficeBuilding style={{ fontSize: '2.5rem', marginBottom: 'var(--space-md)', color: 'var(--primary-light)' }} />
           <h1 className="font-display text-3xl font-bold" style={{ marginBottom: 'var(--space-xs)' }}>Grand Paradise</h1>
           <p className="text-muted text-sm">Sign in to your account</p>
         </div>

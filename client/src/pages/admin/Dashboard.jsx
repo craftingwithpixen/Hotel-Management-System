@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiOutlineCurrencyRupee, HiOutlineCalendar, HiOutlineShoppingCart, HiOutlineUsers, HiOutlineOfficeBuilding, HiOutlineTrendingUp, HiOutlineExclamation } from 'react-icons/hi';
+import { HiOutlineCurrencyRupee, HiOutlineCalendar, HiOutlineShoppingCart, HiOutlineUsers, HiOutlineOfficeBuilding, HiOutlineTrendingUp, HiOutlineExclamation, HiOutlineClipboardList, HiOutlineKey } from 'react-icons/hi';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../../services/api';
 
@@ -230,13 +230,13 @@ export default function Dashboard() {
           <h3 className="font-bold text-lg" style={{ marginBottom: 'var(--space-lg)' }}>Quick Actions</h3>
           <div className="grid grid-2 gap-md" style={{ marginBottom: 'var(--space-xl)' }}>
             {[
-              { label: 'New Booking', icon: '📋', color: 'var(--primary)' },
-              { label: 'Add Order', icon: '🍽️', color: 'var(--accent)' },
-              { label: 'Check In', icon: '🔑', color: 'var(--success)' },
-              { label: 'Generate Bill', icon: '💰', color: 'var(--info)' },
+              { label: 'New Booking', icon: HiOutlineClipboardList, color: 'var(--primary)' },
+              { label: 'Add Order', icon: HiOutlineShoppingCart, color: 'var(--accent)' },
+              { label: 'Check In', icon: HiOutlineKey, color: 'var(--success)' },
+              { label: 'Generate Bill', icon: HiOutlineCurrencyRupee, color: 'var(--info)' },
             ].map((action) => (
               <button key={action.label} className="card card-hover" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-md)', border: '1px dashed var(--border)' }}>
-                <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)' }}>{action.icon}</div>
+                <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)', color: action.color }}><action.icon /></div>
                 <div className="text-sm font-medium">{action.label}</div>
               </button>
             ))}

@@ -35,7 +35,7 @@ export default function AdminLayout() {
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
           <div style={{ width: 36, height: 36, background: 'var(--gradient-primary)', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-            🏨
+            <HiOutlineOfficeBuilding />
           </div>
           <div>
             <h1>Grand Paradise</h1>
@@ -79,7 +79,7 @@ export default function AdminLayout() {
               <HiOutlineMenu style={{ fontSize: '1.25rem' }} />
             </button>
             <div>
-              <h2 className="text-lg font-bold">Welcome back, {user?.name?.split(' ')[0] || 'Admin'} 👋</h2>
+              <h2 className="text-lg font-bold">Welcome back, {user?.name?.split(' ')[0] || 'Admin'}</h2>
               <p className="text-xs text-muted">{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>

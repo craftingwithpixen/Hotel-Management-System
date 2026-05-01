@@ -38,7 +38,7 @@ export default function ReceptionistDashboard() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>🏨 Reception Dashboard</h1>
+          <h1>Reception Dashboard</h1>
           <p className="text-muted">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
         <button className="btn btn-outline" onClick={() => window.location.reload()}><HiOutlineRefresh /> Refresh</button>

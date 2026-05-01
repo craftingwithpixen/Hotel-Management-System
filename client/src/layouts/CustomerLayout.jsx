@@ -63,7 +63,7 @@ export default function CustomerLayout() {
             onClick={closeMenu}
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}
           >
-            <span style={{ fontSize: '1.45rem' }}>🏨</span>
+            <HiOutlineHome style={{ fontSize: '1.45rem', color: '#d8c69b' }} />
             <span style={brandGold}>Grand Paradise</span>
           </NavLink>
           <button

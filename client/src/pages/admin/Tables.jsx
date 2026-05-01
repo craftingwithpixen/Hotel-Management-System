@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HiOutlinePlus, HiOutlineTrash, HiOutlineQrcode } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineTrash, HiOutlineQrcode, HiOutlineViewGrid, HiOutlineX } from 'react-icons/hi';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import QRDisplay from '../../components/QRDisplay';
@@ -117,7 +117,7 @@ export default function Tables() {
                 className="card card-hover"
                 style={{ textAlign: 'center', borderColor: s.border, background: s.bg, position: 'relative' }}
               >
-                <div style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }}>🪑</div>
+                <HiOutlineViewGrid style={{ fontSize: '2rem', marginBottom: 'var(--space-sm)' }} />
                 <div className="font-bold text-lg">{table.tableNumber}</div>
                 <div className="text-xs text-muted">
                   {table.location} · {table.capacity} seats
@@ -151,7 +151,7 @@ export default function Tables() {
             <div className="modal-header" style={{ justifyContent: 'space-between' }}>
               <h2 style={{ margin: 0 }}>Table QR</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => setQrModalTable(null)}>
-                ✕
+                <HiOutlineX />
               </button>
             </div>
             <QRDisplay table={qrModalTable} onRegenerate={fetchAll} />
@@ -166,7 +166,7 @@ export default function Tables() {
             <div className="modal-header">
               <h2>Add Table</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}>
-                ✕
+                <HiOutlineX />
               </button>
             </div>
             <form onSubmit={handleCreate}>

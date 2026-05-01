@@ -144,8 +144,8 @@ export default function AttendanceCalendar({ staffId, staffName, editable = fals
                   }}
                 >
                   {day}
-                  {record?.present && <div style={{ fontSize: '0.6rem', marginTop: 1 }}>✓</div>}
-                  {record && !record.present && <div style={{ fontSize: '0.6rem', marginTop: 1 }}>✗</div>}
+                  {record?.present && <div style={{ fontSize: '0.6rem', marginTop: 1 }}><HiOutlineCheck /></div>}
+                  {record && !record.present && <div style={{ fontSize: '0.6rem', marginTop: 1 }}><HiOutlineX /></div>}
                 </div>
               );
             })}

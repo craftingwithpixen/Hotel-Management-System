@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { HiOutlineCurrencyRupee, HiOutlineX, HiOutlineCreditCard, HiOutlineCash } from 'react-icons/hi';
+import { HiOutlineCurrencyRupee, HiOutlineX, HiOutlineCreditCard, HiOutlineCash, HiOutlineCheck, HiOutlineLightningBolt } from 'react-icons/hi';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -64,7 +64,7 @@ export default function PaymentModal({ billing, onSuccess, onClose }) {
               razorpay_order_id:    response.razorpay_order_id,
               razorpay_signature:   response.razorpay_signature,
             });
-            toast.success('Payment successful! 🎉');
+            toast.success('Payment successful');
             onSuccess?.(verified.billing);
             onClose?.();
           } catch {
@@ -74,7 +74,7 @@ export default function PaymentModal({ billing, onSuccess, onClose }) {
         modal: {
           ondismiss: () => {
             setPaying(false);
-            toast('Payment cancelled', { icon: '⚠️' });
+            toast('Payment cancelled');
           },
         },
       });
@@ -170,7 +170,11 @@ export default function PaymentModal({ billing, onSuccess, onClose }) {
           onClick={mode === 'cash' ? handleCash : handleOnline}
           disabled={paying}
         >
-          {paying ? 'Processing…' : mode === 'cash' ? '✓ Record Cash Payment' : '⚡ Pay ₹' + billing.total?.toLocaleString('en-IN')}
+          {paying
+            ? 'Processing...'
+            : mode === 'cash'
+              ? <><HiOutlineCheck /> Record Cash Payment</>
+              : <><HiOutlineLightningBolt /> Pay ₹{billing.total?.toLocaleString('en-IN')}</>}
         </button>
       </div>
     </div>

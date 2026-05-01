@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HiOutlineSave, HiOutlinePhotograph, HiOutlineOfficeBuilding, HiOutlineGlobe, HiOutlinePhone, HiOutlineMail, HiOutlineLocationMarker } from 'react-icons/hi';
+import { HiOutlineSave, HiOutlinePhotograph, HiOutlineOfficeBuilding, HiOutlineGlobe, HiOutlinePhone, HiOutlineMail, HiOutlineLocationMarker, HiOutlineXCircle } from 'react-icons/hi';
 import api from '../../services/api';
 import ImageUpload from '../../components/ImageUpload';
 import toast from 'react-hot-toast';
@@ -53,7 +53,7 @@ export default function ManagerHotel() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>🏢 Hotel Settings</h1>
+          <h1>Hotel Settings</h1>
           <p className="text-muted">Manage hotel information, photos, and availability</p>
         </div>
         <div className="flex gap-md">
@@ -61,7 +61,7 @@ export default function ManagerHotel() {
             className={`btn ${hotel.isOpen ? 'btn-success' : 'btn-outline'}`}
             onClick={toggleOpen}
           >
-            {hotel.isOpen ? '🟢 Open' : '🔴 Closed'} — Click to toggle
+            {hotel.isOpen ? 'Open' : 'Closed'} - Click to toggle
           </button>
           <button className="btn btn-primary" onClick={save} disabled={saving}>
             <HiOutlineSave /> {saving ? 'Saving...' : 'Save Changes'}
@@ -121,7 +121,7 @@ export default function ManagerHotel() {
                   onClick={() => removePhoto(i)}
                   className="btn btn-ghost btn-icon"
                   style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', color: '#fff', borderRadius: '50%' }}
-                >✕</button>
+                ><HiOutlineXCircle /></button>
               </div>
             ))}
           </div>

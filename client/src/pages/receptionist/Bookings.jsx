@@ -97,7 +97,7 @@ export default function ReceptionistBookings() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>📋 Bookings</h1>
+          <h1>Bookings</h1>
           <p className="text-muted">Manage room and table reservations</p>
         </div>
         <div className="flex gap-md">

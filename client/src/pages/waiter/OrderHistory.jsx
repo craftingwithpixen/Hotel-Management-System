@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { HiOutlineRefresh, HiOutlineSearch, HiOutlineEye } from 'react-icons/hi';
+import { HiOutlineRefresh, HiOutlineSearch, HiOutlineEye, HiOutlineX } from 'react-icons/hi';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
@@ -39,7 +39,7 @@ export default function OrderHistory() {
     <div className="animate-fade">
       <div className="page-header">
         <div>
-          <h1>📋 Order History</h1>
+          <h1>Order History</h1>
           <p className="text-muted">{orders.length} total orders</p>
         </div>
         <button className="btn btn-outline" onClick={fetchOrders}><HiOutlineRefresh /> Refresh</button>
@@ -107,7 +107,7 @@ export default function OrderHistory() {
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Order #{selected._id.slice(-8)}</h2>
-              <button className="btn btn-ghost btn-icon" onClick={() => setSelected(null)}>✕</button>
+              <button className="btn btn-ghost btn-icon" onClick={() => setSelected(null)}><HiOutlineX /></button>
             </div>
             <div>
               <div className="flex items-center gap-md" style={{ marginBottom: 'var(--space-md)' }}>
