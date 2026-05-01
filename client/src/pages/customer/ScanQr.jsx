@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   HiOutlineArrowRight,
@@ -7,6 +7,7 @@ import {
   HiOutlineQrcode,
   HiOutlineSparkles,
   HiOutlineTable,
+  HiOutlineX,
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
@@ -47,14 +48,82 @@ export default function ScanQr() {
   const { user, preferredLang } = useAuthStore();
   const t = getCustomerText(user?.preferredLang || preferredLang);
   const [qrValue, setQrValue] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const scanFrameRef = useRef(null);
 
-  const handleOpen = () => {
-    const tableId = extractTableId(qrValue);
+  const stopScanner = () => {
+    if (scanFrameRef.current) cancelAnimationFrame(scanFrameRef.current);
+    scanFrameRef.current = null;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setScanning(false);
+  };
+
+  useEffect(() => () => stopScanner(), []);
+
+  const openTableValue = (value) => {
+    const tableId = extractTableId(value);
     if (!tableId) {
       toast.error(t('pasteQrError'));
       return;
     }
     navigate(`/scan/table/${tableId}`);
+  };
+
+  const handleOpen = () => {
+    openTableValue(qrValue);
+  };
+
+  const startScanner = async () => {
+    if (!('BarcodeDetector' in window)) {
+      toast.error(t('cameraScannerUnsupported'));
+      return;
+    }
+
+    try {
+      const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      setScanning(true);
+
+      requestAnimationFrame(() => {
+        if (!videoRef.current) return;
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+
+        const scan = async () => {
+          if (!videoRef.current || !streamRef.current) return;
+
+          if (videoRef.current.readyState >= 2) {
+            try {
+              const codes = await detector.detect(videoRef.current);
+              const value = codes?.[0]?.rawValue;
+              if (value) {
+                setQrValue(value);
+                stopScanner();
+                openTableValue(value);
+                return;
+              }
+            } catch {
+              // Keep scanning; some frames fail while the camera is settling.
+            }
+          }
+
+          scanFrameRef.current = requestAnimationFrame(scan);
+        };
+
+        scan();
+      });
+    } catch {
+      stopScanner();
+      toast.error(t('cameraPermissionBlocked'));
+    }
   };
 
   const pasteFromClipboard = async () => {
@@ -139,10 +208,28 @@ export default function ScanQr() {
               <button className="btn btn-outline" type="button" onClick={() => navigate('/customer')} style={softButton}>
                 {t('cancel')}
               </button>
+              <button className="btn btn-outline" type="button" onClick={startScanner} style={softButton}>
+                <HiOutlineCamera /> {t('scanWithCamera')}
+              </button>
               <button className="btn btn-primary" type="button" onClick={handleOpen} style={goldButton}>
                 {t('openTableMenu')} <HiOutlineArrowRight />
               </button>
             </div>
+
+            {scanning && (
+              <div className="customer-camera-panel">
+                <div className="customer-camera-head">
+                  <span>{t('scanningQr')}</span>
+                  <button type="button" className="btn btn-outline btn-icon" onClick={stopScanner} style={softButton} title={t('stopScanning')}>
+                    <HiOutlineX />
+                  </button>
+                </div>
+                <div className="customer-camera-view">
+                  <video ref={videoRef} playsInline muted />
+                  <div className="customer-camera-frame" aria-hidden="true" />
+                </div>
+              </div>
+            )}
           </div>
 
           <aside className="customer-scan-card customer-scan-guide">
@@ -284,6 +371,40 @@ export default function ScanQr() {
           justify-content: flex-end;
           gap: var(--space-sm);
           flex-wrap: wrap;
+        }
+        .customer-camera-panel {
+          margin-top: var(--space-lg);
+          border: 1px solid rgba(210,196,149,0.24);
+          border-radius: var(--radius-xl);
+          background: rgba(0,0,0,0.22);
+          overflow: hidden;
+        }
+        .customer-camera-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-md);
+          padding: var(--space-sm) var(--space-md);
+          color: #dfcf9f;
+          font-weight: 700;
+        }
+        .customer-camera-view {
+          position: relative;
+          aspect-ratio: 16 / 9;
+          background: #020607;
+        }
+        .customer-camera-view video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .customer-camera-frame {
+          position: absolute;
+          inset: 18%;
+          border: 2px solid rgba(216,198,155,0.9);
+          border-radius: var(--radius-lg);
+          box-shadow: 0 0 0 999px rgba(0,0,0,0.28);
         }
         .customer-scan-guide {
           display: flex;
