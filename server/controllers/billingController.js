@@ -9,6 +9,29 @@ const { generateInvoice } = require("../services/pdfService");
 const { computeRoomBill } = require("../services/billingCalcService");
 const { Types } = require("mongoose");
 
+const getGuestCustomerId = async () => {
+  const guestEmail = "guest@gmail.com";
+  let guest = await User.findOne({ email: guestEmail, role: "customer", isDeleted: false }).select("_id");
+  if (guest) return guest._id;
+
+  try {
+    guest = await User.create({
+      name: "Guest Customer",
+      email: guestEmail,
+      password: `guest-${Date.now()}`,
+      role: "customer",
+      isVerified: true,
+    });
+    return guest._id;
+  } catch (error) {
+    if (error.code === 11000) {
+      guest = await User.findOne({ email: guestEmail }).select("_id");
+      if (guest) return guest._id;
+    }
+    throw error;
+  }
+};
+
 exports.generate = async (req, res, next) => {
   try {
     const { orderId, bookingId } = req.body;
@@ -47,10 +70,11 @@ exports.generate = async (req, res, next) => {
     const gstRate = hotel?.gstRate || 18;
     const gstAmount = (subtotal * gstRate) / 100;
     const total = subtotal + gstAmount;
+    const resolvedCustomer = customer || req.body.customerId || await getGuestCustomerId();
 
     const bill = await Billing.create({
       hotel: hotel?._id, type, order: resolvedOrderId, booking: resolvedBookingId,
-      customer, items, subtotal, gstRate, gstAmount, total,
+      customer: resolvedCustomer, items, subtotal, gstRate, gstAmount, total,
       generatedBy: req.user._id,
     });
     if (resolvedOrderId) await Order.findByIdAndUpdate(resolvedOrderId, { billing: bill._id, overallStatus: "billed" });
