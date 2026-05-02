@@ -108,7 +108,7 @@ exports.resendOTP = async (req, res, next) => {
   }
 };
 
-// Customer login
+// Shared login for customers and staff
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -119,7 +119,7 @@ exports.login = async (req, res, next) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-    if (!user.isVerified) {
+    if (user.role === "customer" && !user.isVerified) {
       return res.status(403).json({ message: "Please verify your email first", needsVerification: true });
     }
 
