@@ -17,11 +17,13 @@ const roleMenus = {
   chef: [
     { path: '/staff/chef', icon: HiOutlineHome, label: 'Dashboard', end: true },
     { path: '/staff/chef/kitchen', icon: HiOutlineCollection, label: 'Kitchen Board' },
+    { path: '/staff/chef/inventory', icon: HiOutlineClipboardList, label: 'Inventory Usage' },
   ],
   receptionist: [
     { path: '/staff/receptionist', icon: HiOutlineHome, label: 'Dashboard', end: true },
     { path: '/staff/receptionist/bookings', icon: HiOutlineClipboardList, label: 'Bookings' },
     { path: '/staff/receptionist/checkin', icon: HiOutlineKey, label: 'Check In / Out' },
+    { path: '/admin/orders', icon: HiOutlineShoppingCart, label: 'Orders' },
     { path: '/staff/receptionist/billing', icon: HiOutlineCurrencyRupee, label: 'Billing' },
   ],
   manager: [

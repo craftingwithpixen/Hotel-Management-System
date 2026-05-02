@@ -124,7 +124,7 @@ export default function ScanTable() {
 
   return (
     <div
-      className="animate-fade"
+      className="animate-fade scan-table-page"
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(180deg, #091013 0%, #060f12 100%)',
@@ -132,8 +132,9 @@ export default function ScanTable() {
         padding: 'var(--space-lg)',
       }}
     >
-      <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+      <div className="scan-table-shell" style={{ maxWidth: 1080, margin: '0 auto' }}>
         <div
+          className="scan-table-hero"
           style={{
             borderRadius: 20,
             overflow: 'hidden',
@@ -144,8 +145,8 @@ export default function ScanTable() {
             boxShadow: '0 18px 38px rgba(0,0,0,0.35)',
           }}
         >
-          <div style={{ padding: '1.75rem' }}>
-            <p style={{ fontSize: '0.7rem', letterSpacing: '0.24em', color: '#d8c69b', marginBottom: 8 }}>
+          <div className="scan-table-hero-content" style={{ padding: '1.75rem' }}>
+            <p className="scan-table-eyebrow" style={{ fontSize: '0.7rem', letterSpacing: '0.24em', color: '#d8c69b', marginBottom: 8 }}>
               {t('scanAndOrder')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', lineHeight: 1.15, marginBottom: 8 }}>
@@ -158,6 +159,7 @@ export default function ScanTable() {
         </div>
 
         <div
+          className="scan-table-categories"
           style={{
             display: 'flex',
             gap: 8,
@@ -215,7 +217,7 @@ export default function ScanTable() {
               filtered.map((item) => (
                 <div
                   key={item._id}
-                  className="card card-hover"
+                  className="card card-hover scan-menu-card"
                   style={{
                     display: 'flex',
                     gap: 'var(--space-md)',
@@ -227,12 +229,14 @@ export default function ScanTable() {
                 >
                   {item.image ? (
                     <img
+                      className="scan-menu-image"
                       src={item.image}
                       alt={item.name}
                       style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 'var(--radius-md)', flexShrink: 0 }}
                     />
                   ) : (
                     <div
+                      className="scan-menu-image scan-menu-image-empty"
                       style={{
                         width: 84,
                         height: 84,
@@ -249,11 +253,11 @@ export default function ScanTable() {
                       {t('noImage')}
                     </div>
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="font-semibold text-sm" style={{ color: '#f4f5ef' }}>{item.name}</div>
+                  <div className="scan-menu-body" style={{ flex: 1, minWidth: 0 }}>
+                    <div className="font-semibold text-sm scan-menu-title" style={{ color: '#f4f5ef' }}>{item.name}</div>
                     {item.description && (
                       <div
-                        className="text-xs"
+                        className="text-xs scan-menu-description"
                         style={{
                           marginTop: 2,
                           overflow: 'hidden',
@@ -265,10 +269,10 @@ export default function ScanTable() {
                         {item.description}
                       </div>
                     )}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+                    <div className="scan-menu-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
                       <span className="font-bold" style={{ color: '#e9bf47' }}>₹{item.price}</span>
                       {cart.find((c) => c.menuItem._id === item._id) ? (
-                        <div className="flex items-center gap-sm">
+                        <div className="flex items-center gap-sm scan-qty-control">
                           <button
                             className="btn btn-ghost btn-icon"
                             style={{ padding: 4, borderColor: 'rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)' }}
@@ -303,6 +307,7 @@ export default function ScanTable() {
 
           <div>
             <div
+              className="scan-cart-panel"
               style={{
                 position: 'sticky',
                 top: 'var(--space-md)',
@@ -328,11 +333,11 @@ export default function ScanTable() {
                 </p>
               ) : (
                 <>
-                  <div style={{ maxHeight: 260, overflowY: 'auto', marginBottom: 'var(--space-md)' }}>
+                  <div className="scan-cart-items" style={{ maxHeight: 260, overflowY: 'auto', marginBottom: 'var(--space-md)' }}>
                     {cart.map((c) => (
-                      <div key={c.menuItem._id} className="flex items-center justify-between" style={{ padding: '0.45rem 0' }}>
+                      <div key={c.menuItem._id} className="flex items-center justify-between scan-cart-row" style={{ padding: '0.45rem 0' }}>
                         <div style={{ minWidth: 0 }}>
-                          <p style={{ margin: 0, color: '#dfe6e1', fontSize: '0.88rem' }}>{c.menuItem.name}</p>
+                          <p className="scan-cart-item-name" style={{ margin: 0, color: '#dfe6e1', fontSize: '0.88rem' }}>{c.menuItem.name}</p>
                           <p style={{ margin: 0, color: '#8a9690', fontSize: '0.75rem' }}>
                             ₹{c.menuItem.price} x {c.quantity}
                           </p>
@@ -373,9 +378,121 @@ export default function ScanTable() {
         </div>
       </div>
       <style>{`
+        .scan-table-page {
+          overflow-x: hidden;
+        }
+        .scan-table-categories {
+          scrollbar-width: thin;
+          -webkit-overflow-scrolling: touch;
+        }
+        .scan-table-categories button {
+          display: inline-flex;
+          align-items: center;
+        }
+        .scan-menu-title,
+        .scan-cart-item-name {
+          overflow-wrap: anywhere;
+        }
+        .scan-menu-footer .btn,
+        .scan-qty-control .btn {
+          min-width: 34px;
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
         @media (max-width: 900px) {
           .scan-table-grid {
             grid-template-columns: 1fr !important;
+          }
+          .scan-cart-panel {
+            position: static !important;
+          }
+          .scan-cart-items {
+            max-height: none !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .scan-table-page {
+            padding: var(--space-md) !important;
+          }
+          .scan-table-hero {
+            border-radius: 16px !important;
+          }
+          .scan-table-hero-content {
+            padding: var(--space-lg) !important;
+          }
+          .scan-table-eyebrow {
+            letter-spacing: 0.16em !important;
+            line-height: 1.4;
+          }
+          .scan-table-categories {
+            margin-left: calc(-1 * var(--space-md));
+            margin-right: calc(-1 * var(--space-md));
+            border-radius: 0 !important;
+            border-left: 0 !important;
+            border-right: 0 !important;
+            padding: var(--space-sm) var(--space-md) !important;
+          }
+          .scan-menu-card {
+            align-items: flex-start !important;
+            gap: var(--space-sm) !important;
+            padding: var(--space-md) !important;
+          }
+          .scan-menu-image {
+            width: 72px !important;
+            height: 72px !important;
+          }
+          .scan-menu-description {
+            white-space: normal !important;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+          }
+          .scan-menu-footer {
+            align-items: flex-start !important;
+            gap: var(--space-sm);
+          }
+          .scan-menu-footer > button {
+            padding: 0.48rem 0.8rem !important;
+            white-space: nowrap;
+          }
+          .scan-cart-panel {
+            padding: var(--space-md) !important;
+            border-radius: var(--radius-lg) !important;
+          }
+          .scan-cart-row {
+            gap: var(--space-sm);
+          }
+          .scan-cart-row > span {
+            white-space: nowrap;
+          }
+        }
+        @media (max-width: 420px) {
+          .scan-menu-card {
+            display: grid !important;
+            grid-template-columns: 64px minmax(0, 1fr);
+          }
+          .scan-menu-image {
+            width: 64px !important;
+            height: 64px !important;
+          }
+          .scan-menu-footer {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+          .scan-menu-footer > button,
+          .scan-qty-control {
+            width: 100%;
+            justify-content: center;
+          }
+          .scan-qty-control {
+            display: grid !important;
+            grid-template-columns: 34px minmax(0, 1fr) 34px;
+            text-align: center;
+          }
+          .scan-cart-row {
+            align-items: flex-start !important;
           }
         }
       `}</style>

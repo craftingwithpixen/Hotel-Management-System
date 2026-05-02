@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { HiOutlineViewGrid } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const statusColors = { pending: '#f59e0b', preparing: '#3b82f6', ready: '#10b981', served: '#8b5cf6', billed: '#64748b' };
 
@@ -17,6 +18,8 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore();
+  const canSendKOT = ['admin', 'waiter'].includes(user?.role);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -141,7 +144,7 @@ export default function Orders() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold">Total: ₹{getTotal(order.items).toLocaleString('en-IN')}</span>
                 <div className="flex gap-xs">
-                  {order.overallStatus === 'pending' && (
+                  {canSendKOT && order.overallStatus === 'pending' && (
                     <button className="btn btn-primary btn-sm" onClick={() => handleSendKOT(order._id)}>
                       Send KOT
                     </button>

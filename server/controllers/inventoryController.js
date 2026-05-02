@@ -1,5 +1,6 @@
 const InventoryItem = require("../models/InventoryItem");
 const Supplier = require("../models/Supplier");
+const { sendLowStockAlerts } = require("../services/lowStockAlertService");
 
 exports.list = async (req, res, next) => {
   try {
@@ -55,12 +56,80 @@ exports.restock = async (req, res, next) => {
 
 exports.consume = async (req, res, next) => {
   try {
-    const { quantity } = req.body;
+    const { quantity, note } = req.body;
+    const usedQty = Number(quantity);
+    if (!Number.isFinite(usedQty) || usedQty <= 0) {
+      return res.status(400).json({ message: "Quantity must be greater than 0" });
+    }
+
     const item = await InventoryItem.findById(req.params.id);
-    item.currentStock = Math.max(0, item.currentStock - quantity);
-    item.dailyConsumption.push({ date: new Date(), quantity });
+    if (!item || item.isDeleted) return res.status(404).json({ message: "Inventory item not found" });
+
+    const wasAboveThreshold = item.currentStock > item.lowStockThreshold;
+    item.currentStock = Math.max(0, item.currentStock - usedQty);
+    item.dailyConsumption.push({
+      date: new Date(),
+      quantity: usedQty,
+      usedBy: req.user?._id,
+      note,
+    });
     await item.save();
+
+    if (wasAboveThreshold && item.currentStock <= item.lowStockThreshold) {
+      await sendLowStockAlerts([item], req.app.get("io"));
+    }
+
     res.json({ item });
+  } catch (error) { next(error); }
+};
+
+exports.consumeToday = async (req, res, next) => {
+  try {
+    const usages = Array.isArray(req.body.usages) ? req.body.usages : [];
+    const validUsages = usages
+      .map((usage) => ({
+        itemId: usage.itemId,
+        quantity: Number(usage.quantity),
+        note: usage.note,
+      }))
+      .filter((usage) => usage.itemId && Number.isFinite(usage.quantity) && usage.quantity > 0);
+
+    if (validUsages.length === 0) {
+      return res.status(400).json({ message: "Enter at least one used inventory quantity" });
+    }
+
+    const updatedItems = [];
+    const lowStockItems = [];
+    for (const usage of validUsages) {
+      const item = await InventoryItem.findOne({ _id: usage.itemId, isDeleted: false });
+      if (!item) continue;
+
+      const wasAboveThreshold = item.currentStock > item.lowStockThreshold;
+      item.currentStock = Math.max(0, item.currentStock - usage.quantity);
+      item.dailyConsumption.push({
+        date: new Date(),
+        quantity: usage.quantity,
+        usedBy: req.user?._id,
+        note: usage.note,
+      });
+      await item.save();
+      updatedItems.push(item);
+      if (wasAboveThreshold && item.currentStock <= item.lowStockThreshold) {
+        lowStockItems.push(item);
+      }
+    }
+
+    if (updatedItems.length === 0) {
+      return res.status(404).json({ message: "No matching inventory items found" });
+    }
+
+    const alertResult = await sendLowStockAlerts(lowStockItems, req.app.get("io"));
+
+    res.json({
+      message: "Inventory usage recorded",
+      items: updatedItems,
+      alertsSentTo: alertResult.sentTo,
+    });
   } catch (error) { next(error); }
 };
 
