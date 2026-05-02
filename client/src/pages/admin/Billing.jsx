@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   HiOutlineDownload, HiOutlinePrinter, HiOutlineSearch,
   HiOutlineCurrencyRupee, HiOutlineRefresh, HiOutlinePlus,
-  HiOutlineTag, HiOutlineStar, HiOutlineUsers, HiOutlineX, HiOutlineCheckCircle,
+  HiOutlineTag, HiOutlineStar, HiOutlineUsers, HiOutlineCheckCircle,
 } from 'react-icons/hi';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -54,6 +54,17 @@ export default function Billing() {
     b._id?.toLowerCase().includes(search.toLowerCase()) ||
     b.customer?.name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  useEffect(() => {
+    if (loading) return;
+    if (filtered.length === 0) {
+      setSelected(null);
+      return;
+    }
+    if (!selected || !filtered.some((bill) => bill._id === selected._id)) {
+      setSelected(filtered[0]);
+    }
+  }, [loading, filtered, selected]);
 
   /* ── Generate bill ──────────────────────────────────────────────── */
   const generateBill = async () => {
@@ -162,7 +173,7 @@ export default function Billing() {
       </div>
 
       {/* Split view: table + detail panel */}
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 380px' : '1fr', gap: 'var(--space-lg)', alignItems: 'start' }}>
+      <div className="billing-split-view">
         {/* Bills table */}
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           {loading ? (
@@ -218,13 +229,12 @@ export default function Billing() {
         </div>
 
         {/* Detail panel */}
-        {selected && (
+        {selected ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
             {/* Summary card */}
             <div className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
                 <h3 className="font-bold">Bill Detail</h3>
-                <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setSelected(null)}><HiOutlineX /></button>
               </div>
               <div style={{ fontSize: '0.875rem', display: 'grid', gap: 8 }}>
                 {(selected.items || []).map((item, i) => (
@@ -308,6 +318,11 @@ export default function Billing() {
               </div>
             )}
           </div>
+        ) : (
+          <div className="card">
+            <h3 className="font-bold" style={{ marginBottom: 'var(--space-sm)' }}>Bill Detail</h3>
+            <p className="text-muted" style={{ margin: 0 }}>No bill selected. Generate or search for a bill to view its calculation.</p>
+          </div>
         )}
       </div>
 
@@ -340,6 +355,19 @@ export default function Billing() {
           onClose={() => setShowPay(false)}
         />
       )}
+      <style>{`
+        .billing-split-view {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 380px;
+          gap: var(--space-lg);
+          align-items: start;
+        }
+        @media (max-width: 1100px) {
+          .billing-split-view {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 }
