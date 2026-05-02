@@ -93,6 +93,12 @@ const AuthHomeRedirect = () => {
   return <Navigate to={getRoleHome(user?.role)} replace />;
 };
 
+const AdminOnly = ({ children }) => (
+  <ProtectedRoute allowedRoles={['admin']}>
+    {children}
+  </ProtectedRoute>
+);
+
 // ────────────────────────────────────────────────────────────────────
 function App() {
   const { checkAuth } = useAuthStore();
@@ -116,23 +122,23 @@ function App() {
         {/* ── QR Scan (public, mobile-friendly) ─────────────── */}
         <Route path="/scan/table/:tableId" element={<ScanTable />} />
 
-        {/* ── Admin (role: admin only) ──────────────────────── */}
+        {/* ── Admin (orders also visible to receptionist) ──────────────────────── */}
         <Route path="/admin" element={
-          <ProtectedRoute allowedRoles={['admin']}>
+          <ProtectedRoute allowedRoles={['admin', 'receptionist']}>
             <AdminLayout />
           </ProtectedRoute>
         }>
-          <Route index           element={<Dashboard />} />
-          <Route path="rooms"    element={<Rooms />} />
-          <Route path="tables"   element={<Tables />} />
-          <Route path="bookings" element={<Bookings />} />
+          <Route index           element={<AdminOnly><Dashboard /></AdminOnly>} />
+          <Route path="rooms"    element={<AdminOnly><Rooms /></AdminOnly>} />
+          <Route path="tables"   element={<AdminOnly><Tables /></AdminOnly>} />
+          <Route path="bookings" element={<AdminOnly><Bookings /></AdminOnly>} />
           <Route path="orders"   element={<Orders />} />
-          <Route path="menu"     element={<MenuPage />} />
-          <Route path="staff"    element={<Staff />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="billing"  element={<Billing />} />
-          <Route path="reports"  element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="menu"     element={<AdminOnly><MenuPage /></AdminOnly>} />
+          <Route path="staff"    element={<AdminOnly><Staff /></AdminOnly>} />
+          <Route path="inventory" element={<AdminOnly><Inventory /></AdminOnly>} />
+          <Route path="billing"  element={<AdminOnly><Billing /></AdminOnly>} />
+          <Route path="reports"  element={<AdminOnly><Reports /></AdminOnly>} />
+          <Route path="settings" element={<AdminOnly><Settings /></AdminOnly>} />
         </Route>
 
         {/* ── Staff: Manager ──────────────────────────────────── */}

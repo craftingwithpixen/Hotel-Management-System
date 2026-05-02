@@ -292,7 +292,7 @@ export default function Billing() {
               <div className="card">
                 <h4 className="font-bold" style={{ marginBottom: 'var(--space-md)' }}>Adjustments</h4>
                 {/* Coupon */}
-                <div style={{ marginBottom: 'var(--space-md)' }}>
+                {/* <div style={{ marginBottom: 'var(--space-md)' }}>
                   <label className="text-xs text-muted font-bold uppercase" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
                     <HiOutlineTag /> Coupon Code
                   </label>
@@ -301,7 +301,7 @@ export default function Billing() {
                       onChange={e => setCoupon(e.target.value.toUpperCase())} style={{ flex: 1 }} />
                     <button className="btn btn-outline btn-sm" onClick={applyCoupon} disabled={applying || !couponCode}>Apply</button>
                   </div>
-                </div>
+                </div> */}
                 {/* Loyalty */}
                 <div style={{ marginBottom: 'var(--space-md)' }}>
                   <label className="text-xs text-muted font-bold uppercase" style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>

@@ -23,6 +23,7 @@ const roleMenus = {
     { path: '/staff/receptionist', icon: HiOutlineHome, label: 'Dashboard', end: true },
     { path: '/staff/receptionist/bookings', icon: HiOutlineClipboardList, label: 'Bookings' },
     { path: '/staff/receptionist/checkin', icon: HiOutlineKey, label: 'Check In / Out' },
+    { path: '/admin/orders', icon: HiOutlineShoppingCart, label: 'Orders' },
     { path: '/staff/receptionist/billing', icon: HiOutlineCurrencyRupee, label: 'Billing' },
   ],
   manager: [

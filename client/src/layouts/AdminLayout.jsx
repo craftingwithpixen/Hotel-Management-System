@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineHome, HiOutlineUsers, HiOutlineClipboardList, HiOutlineCog, HiOutlineLogout, HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCollection, HiOutlineShoppingCart, HiOutlineCurrencyRupee, HiOutlineBell, HiOutlineMenu } from 'react-icons/hi';
+import { HiOutlineHome, HiOutlineUsers, HiOutlineClipboardList, HiOutlineCog, HiOutlineLogout, HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCollection, HiOutlineShoppingCart, HiOutlineCurrencyRupee, HiOutlineBell, HiOutlineMenu, HiOutlineKey } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
 
@@ -17,10 +17,19 @@ const menuItems = [
   { path: '/admin/settings', icon: HiOutlineCog, label: 'Settings' },
 ];
 
+const receptionistMenuItems = [
+  { path: '/staff/receptionist', icon: HiOutlineHome, label: 'Dashboard', end: true },
+  { path: '/staff/receptionist/bookings', icon: HiOutlineClipboardList, label: 'Bookings' },
+  { path: '/staff/receptionist/checkin', icon: HiOutlineKey, label: 'Check In / Out' },
+  { path: '/admin/orders', icon: HiOutlineShoppingCart, label: 'Orders' },
+  { path: '/staff/receptionist/billing', icon: HiOutlineCurrencyRupee, label: 'Billing' },
+];
+
 export default function AdminLayout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const visibleMenuItems = user?.role === 'receptionist' ? receptionistMenuItems : menuItems;
 
   const handleLogout = async () => {
     await logout();
@@ -44,7 +53,7 @@ export default function AdminLayout() {
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
