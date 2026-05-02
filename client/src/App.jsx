@@ -28,6 +28,7 @@ import Settings   from './pages/admin/Settings';
 
 // Chef Pages
 import KitchenBoard from './pages/chef/KitchenBoard';
+import InventoryUsage from './pages/chef/InventoryUsage';
 
 // Waiter Pages
 import OrderPad     from './pages/waiter/OrderPad';
@@ -179,6 +180,7 @@ function App() {
         }>
           <Route index           element={<KitchenBoard />} />
           <Route path="kitchen"  element={<KitchenBoard />} />
+          <Route path="inventory" element={<InventoryUsage />} />
         </Route>
 
         {/* ── Customer ────────────────────────────────────────── */}

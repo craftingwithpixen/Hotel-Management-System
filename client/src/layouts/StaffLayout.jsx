@@ -17,6 +17,7 @@ const roleMenus = {
   chef: [
     { path: '/staff/chef', icon: HiOutlineHome, label: 'Dashboard', end: true },
     { path: '/staff/chef/kitchen', icon: HiOutlineCollection, label: 'Kitchen Board' },
+    { path: '/staff/chef/inventory', icon: HiOutlineClipboardList, label: 'Inventory Usage' },
   ],
   receptionist: [
     { path: '/staff/receptionist', icon: HiOutlineHome, label: 'Dashboard', end: true },
