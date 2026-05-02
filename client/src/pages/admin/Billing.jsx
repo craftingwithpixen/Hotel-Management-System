@@ -131,7 +131,27 @@ export default function Billing() {
       const { data } = await api.get(`/billing/${bill._id}/pdf`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
       const a = document.createElement('a'); a.href = url; a.download = `invoice-${bill._id}.pdf`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
     } catch { toast.error('PDF download failed'); }
+  };
+
+  const printBill = async (bill) => {
+    try {
+      const { data } = await api.get(`/billing/${bill._id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+      const printWindow = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!printWindow) {
+        toast.error('Allow pop-ups to print the invoice');
+        URL.revokeObjectURL(url);
+        return;
+      }
+      setTimeout(() => {
+        printWindow.print();
+        URL.revokeObjectURL(url);
+      }, 700);
+    } catch {
+      toast.error('Invoice print failed');
+    }
   };
 
   /* ── Load bill detail ───────────────────────────────────────────── */
@@ -206,7 +226,7 @@ export default function Billing() {
                         <button className="btn btn-ghost btn-sm btn-icon" title="Download PDF" onClick={() => downloadPdf(bill)}>
                           <HiOutlineDownload />
                         </button>
-                        <button className="btn btn-ghost btn-sm btn-icon" title="Print" onClick={() => window.print()}>
+                        <button className="btn btn-ghost btn-sm btn-icon" title="Print Invoice" onClick={() => printBill(bill)}>
                           <HiOutlinePrinter />
                         </button>
                       </div>
