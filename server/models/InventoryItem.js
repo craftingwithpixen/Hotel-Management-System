@@ -26,6 +26,8 @@ const inventoryItemSchema = new mongoose.Schema(
       {
         date: Date,
         quantity: Number,
+        usedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        note: String,
       },
     ],
     lastRestockedAt: { type: Date },

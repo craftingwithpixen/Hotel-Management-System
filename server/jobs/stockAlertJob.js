@@ -1,7 +1,6 @@
 const cron = require("node-cron");
 const InventoryItem = require("../models/InventoryItem");
-const { emitInventoryAlert } = require("../services/socketService");
-const emailService = require("../services/emailService");
+const { sendLowStockAlerts } = require("../services/lowStockAlertService");
 
 const startStockAlertJob = (io) => {
   // Run every 6 hours
@@ -22,14 +21,8 @@ const startStockAlertJob = (io) => {
         byHotel[hotelId].push(item);
       });
 
-      for (const [hotelId, items] of Object.entries(byHotel)) {
-        // Emit socket event to admin room
-        emitInventoryAlert(io, items);
-
-        // Send email via Resend
-        if (items[0].hotel.email) {
-          await emailService.sendLowStockAlert(items[0].hotel.email, items);
-        }
+      for (const items of Object.values(byHotel)) {
+        await sendLowStockAlerts(items, io);
       }
 
       console.log(`📦 Stock alert: ${lowItems.length} items below threshold`);

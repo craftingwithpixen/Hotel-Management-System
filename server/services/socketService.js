@@ -88,7 +88,7 @@ const emitBookingCancelled = (io, booking) => {
 };
 
 const emitInventoryAlert = (io, items) => {
-  io.to("admin").emit("inventory:alert", {
+  io.to("admin").to("manager").emit("inventory:alert", {
     items: items.map((i) => ({
       name: i.name,
       currentStock: i.currentStock,
@@ -97,7 +97,7 @@ const emitInventoryAlert = (io, items) => {
     })),
   });
 
-  void notifyRoles(["admin"], {
+  void notifyRoles(["admin", "manager"], {
     type: "inventory:alert",
     message: `Low stock alert (${items.length} item${items.length === 1 ? "" : "s"})`,
     payload: {
