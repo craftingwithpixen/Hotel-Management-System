@@ -6,7 +6,6 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
 
 const connectDB = require("./config/db");
@@ -69,12 +68,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-// Rate limiting
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
-const authLimiter = rateLimit({ windowMs: 60 * 1000, max: 5 });
-app.use("/api/v1/auth", authLimiter);
-app.use(limiter);
 
 // API Routes
 app.use("/api/v1/auth", authRoutes);
