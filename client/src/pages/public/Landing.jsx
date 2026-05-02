@@ -150,7 +150,7 @@ export default function Landing() {
             )}
           </header>
 
-          <div id="hero" className="grid gap-lg" style={{ gridTemplateColumns: '1.1fr 0.9fr', padding: '3.8rem 0 4.4rem', alignItems: 'center' }}>
+          <div id="hero" className="grid gap-lg landing-hero" style={{ gridTemplateColumns: '1.1fr 0.9fr', padding: '7.2rem 0 4.4rem', alignItems: 'center' }}>
             <div>
               <p style={{ fontSize: '0.72rem', letterSpacing: '0.25em', color: '#ddc998', marginBottom: 14 }}>ALL-IN-ONE HOSPITALITY EXPERIENCE</p>
               <h1 style={{ fontSize: 'clamp(2.1rem, 5vw, 4.1rem)', lineHeight: 1.02, marginBottom: 16, maxWidth: 720, fontWeight: 800 }}>
@@ -162,12 +162,7 @@ export default function Landing() {
               </h1>
               <p style={{ color: '#d1d7d2', maxWidth: 610, fontSize: '1.03rem', marginBottom: 18 }}>
                 Discover hotels, reserve rooms, and enjoy your favorite meals-anytime, anywhere.
-              </p>
-              <div className="grid" style={{ gridTemplateColumns: '1.4fr 1fr 1fr', gap: 10, marginBottom: 18 }}>
-                <input className="input" placeholder="Search hotels / restaurants" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.12)' }} />
-                <input className="input" placeholder="Location" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.12)' }} />
-                <input className="input" placeholder="Check-in / Check-out" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.12)' }} />
-              </div>
+              </p>           
               <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
                 <Link to={isAuthenticated ? loggedInHome : '/register'} style={goldButton}>Book Now</Link>
                 <Link to="/customer" className="btn btn-outline" style={{ borderRadius: 999, padding: '0.66rem 1.45rem', borderColor: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.08)' }}>
@@ -176,8 +171,9 @@ export default function Landing() {
               </div>
             </div>
 
-            <div style={{ position: 'relative', height: 470, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="landing-hero-visual" style={{ position: 'relative', height: 470, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div
+                className="landing-hero-main-image"
                 style={{
                   width: 450,
                   maxWidth: '98%',
@@ -190,8 +186,8 @@ export default function Landing() {
                   boxShadow: '0 22px 42px rgba(0,0,0,0.45)',
                 }}
               />
-              <div style={{ position: 'absolute', right: 14, top: 85, width: 86, height: 86, borderRadius: '50%', border: '4px solid #ebefea', background: "url('https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=300&q=80') center/cover", boxShadow: '0 8px 20px rgba(0,0,0,0.45)' }} />
-              <div style={{ position: 'absolute', left: 12, bottom: 90, width: 86, height: 86, borderRadius: '50%', border: '4px solid #ebefea', background: "url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80') center/cover", boxShadow: '0 8px 20px rgba(0,0,0,0.45)' }} />
+              <div className="landing-hero-food-badge landing-hero-food-badge-top" style={{ position: 'absolute', right: 14, top: 85, width: 86, height: 86, borderRadius: '50%', border: '4px solid #ebefea', background: "url('https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=300&q=80') center/cover", boxShadow: '0 8px 20px rgba(0,0,0,0.45)' }} />
+              <div className="landing-hero-food-badge landing-hero-food-badge-bottom" style={{ position: 'absolute', left: 12, bottom: 90, width: 86, height: 86, borderRadius: '50%', border: '4px solid #ebefea', background: "url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=300&q=80') center/cover", boxShadow: '0 8px 20px rgba(0,0,0,0.45)' }} />
             </div>
           </div>
         </div>
@@ -533,8 +529,16 @@ export default function Landing() {
           min-width: 0;
         }
         .landing-header {
-          position: relative;
+          position: fixed;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: min(calc(100% - 2rem), 1244px);
+          z-index: 50;
           gap: 1rem;
+          padding: 0 var(--space-lg);
+          border-radius: 0 0 22px 22px;
+          box-shadow: 0 16px 30px rgba(0,0,0,0.24);
         }
         .landing-menu-button {
           display: none;
@@ -698,6 +702,26 @@ export default function Landing() {
           font-size: 0.82rem;
         }
         @media (max-width: 900px) {
+          .landing-hero {
+            grid-template-columns: 1fr !important;
+            gap: 1.35rem !important;
+            padding-top: 6.6rem !important;
+          }
+          .landing-hero-visual {
+            height: 360px !important;
+            align-items: flex-start !important;
+          }
+          .landing-hero-main-image {
+            width: min(86vw, 360px) !important;
+          }
+          .landing-hero-food-badge-top {
+            right: max(1rem, calc(50% - 180px)) !important;
+            top: 0.8rem !important;
+          }
+          .landing-hero-food-badge-bottom {
+            left: max(1rem, calc(50% - 180px)) !important;
+            bottom: 1.6rem !important;
+          }
           .landing-explore-grid,
           .landing-food-grid,
           .landing-stay-grid {
@@ -758,8 +782,34 @@ export default function Landing() {
           }
         }
         @media (max-width: 640px) {
+          .landing-hero {
+            gap: 0.9rem !important;
+            padding-top: 5.8rem !important;
+            padding-bottom: 2.4rem !important;
+          }
+          .landing-hero-visual {
+            height: 270px !important;
+          }
+          .landing-hero-main-image {
+            width: min(76vw, 292px) !important;
+          }
+          .landing-hero-food-badge {
+            width: 70px !important;
+            height: 70px !important;
+            border-width: 3px !important;
+          }
+          .landing-hero-food-badge-top {
+            right: max(1rem, calc(50% - 142px)) !important;
+            top: -0.15rem !important;
+          }
+          .landing-hero-food-badge-bottom {
+            left: max(1rem, calc(50% - 142px)) !important;
+            bottom: 1.1rem !important;
+          }
           .landing-header {
             min-height: 72px !important;
+            width: calc(100% - 1rem);
+            padding: 0 var(--space-md);
           }
           .landing-mobile-menu {
             border-radius: 14px;
@@ -838,4 +888,3 @@ export default function Landing() {
     </main>
   );
 }
-
