@@ -3,8 +3,10 @@ import toast from 'react-hot-toast';
 import {
   HiOutlineCheckCircle,
   HiOutlineExclamationCircle,
+  HiOutlinePlus,
   HiOutlineRefresh,
   HiOutlineSearch,
+  HiOutlineX,
 } from 'react-icons/hi';
 import api from '../../services/api';
 
@@ -14,6 +16,14 @@ export default function InventoryUsage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showRequest, setShowRequest] = useState(false);
+  const [requesting, setRequesting] = useState(false);
+  const [requestForm, setRequestForm] = useState({
+    itemName: '',
+    quantity: '',
+    unit: 'kg',
+    note: '',
+  });
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -64,6 +74,28 @@ export default function InventoryUsage() {
     }
   };
 
+  const submitRequest = async (e) => {
+    e.preventDefault();
+    if (!requestForm.itemName.trim()) return toast.error('Enter item name');
+
+    setRequesting(true);
+    try {
+      await api.post('/inventory/requests', {
+        itemName: requestForm.itemName.trim(),
+        quantity: requestForm.quantity ? Number(requestForm.quantity) : undefined,
+        unit: requestForm.unit,
+        note: requestForm.note,
+      });
+      toast.success('Inventory request sent to admin and manager');
+      setShowRequest(false);
+      setRequestForm({ itemName: '', quantity: '', unit: 'kg', note: '' });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to send inventory request');
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   return (
     <div className="animate-fade chef-inventory-page">
       <div className="page-header">
@@ -71,9 +103,14 @@ export default function InventoryUsage() {
           <h1>Today&apos;s Inventory Usage</h1>
           <p className="text-muted">Enter ingredients used by the kitchen. Stock updates immediately.</p>
         </div>
-        <button className="btn btn-outline" type="button" onClick={fetchInventory} disabled={loading}>
-          <HiOutlineRefresh /> Refresh
-        </button>
+        <div className="flex gap-sm">
+          <button className="btn btn-outline" type="button" onClick={() => setShowRequest(true)}>
+            <HiOutlinePlus /> Request Inventory
+          </button>
+          <button className="btn btn-outline" type="button" onClick={fetchInventory} disabled={loading}>
+            <HiOutlineRefresh /> Refresh
+          </button>
+        </div>
       </div>
 
       <div className="card chef-inventory-summary">
@@ -163,6 +200,73 @@ export default function InventoryUsage() {
           </button>
         </div>
       </form>
+
+      {showRequest && (
+        <div className="modal-overlay" onClick={() => setShowRequest(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <div className="modal-header">
+              <h2>Request Inventory</h2>
+              <button className="btn btn-ghost btn-icon" type="button" onClick={() => setShowRequest(false)}><HiOutlineX /></button>
+            </div>
+            <form onSubmit={submitRequest}>
+              <div className="input-group mb-md">
+                <label>Item name</label>
+                <input
+                  className="input"
+                  value={requestForm.itemName}
+                  onChange={(e) => setRequestForm((prev) => ({ ...prev, itemName: e.target.value }))}
+                  placeholder="Tomatoes, Paneer, Oil..."
+                  required
+                />
+              </div>
+              <div className="grid grid-2 gap-md mb-md">
+                <div className="input-group">
+                  <label>Quantity</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={requestForm.quantity}
+                    onChange={(e) => setRequestForm((prev) => ({ ...prev, quantity: e.target.value }))}
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Unit</label>
+                  <select
+                    className="input"
+                    value={requestForm.unit}
+                    onChange={(e) => setRequestForm((prev) => ({ ...prev, unit: e.target.value }))}
+                  >
+                    <option value="kg">kg</option>
+                    <option value="litre">litre</option>
+                    <option value="pcs">pcs</option>
+                    <option value="box">box</option>
+                    <option value="packet">packet</option>
+                  </select>
+                </div>
+              </div>
+              <div className="input-group mb-lg">
+                <label>Note</label>
+                <textarea
+                  className="input"
+                  value={requestForm.note}
+                  onChange={(e) => setRequestForm((prev) => ({ ...prev, note: e.target.value }))}
+                  placeholder="Why it is needed, urgency, brand preference..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-md justify-end">
+                <button type="button" className="btn btn-outline" onClick={() => setShowRequest(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={requesting}>
+                  {requesting ? 'Sending...' : 'Send Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .chef-inventory-summary {

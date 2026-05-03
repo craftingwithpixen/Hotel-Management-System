@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle, HiOutlineX, HiOutlineClock } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle, HiOutlineX, HiOutlineClock, HiOutlineCheckCircle } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -13,6 +13,8 @@ export default function Inventory() {
   const [historyItem, setHistoryItem] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [restocking, setRestocking] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [requestAction, setRequestAction] = useState('');
   const [form, setForm] = useState({
     name: '',
     category: 'Grains',
@@ -28,9 +30,14 @@ export default function Inventory() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [hotelRes, inventoryRes] = await Promise.all([api.get('/hotel'), api.get('/inventory')]);
+      const [hotelRes, inventoryRes, requestRes] = await Promise.all([
+        api.get('/hotel'),
+        api.get('/inventory'),
+        api.get('/inventory/requests', { params: { limit: 20 } }),
+      ]);
       setHotelId(hotelRes.data?.hotel?._id || null);
       setItems(inventoryRes.data?.items || []);
+      setRequests(requestRes.data?.requests || []);
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to load inventory');
       setItems([]);
@@ -45,6 +52,7 @@ export default function Inventory() {
   }, []);
 
   const filtered = items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()));
+  const pendingRequests = requests.filter((request) => request.status === 'pending');
 
   const formatDate = (date) => {
     if (!date) return 'Not recorded';
@@ -101,6 +109,19 @@ export default function Inventory() {
     }
   };
 
+  const updateRequestStatus = async (requestId, status) => {
+    setRequestAction(`${requestId}:${status}`);
+    try {
+      const { data } = await api.patch(`/inventory/requests/${requestId}`, { status });
+      setRequests((prev) => prev.map((request) => request._id === requestId ? data.request : request));
+      toast.success(`Request marked ${status}`);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update request');
+    } finally {
+      setRequestAction('');
+    }
+  };
+
   return (
     <div className="animate-fade">
       <div className="page-header">
@@ -118,6 +139,78 @@ export default function Inventory() {
           <HiOutlineSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input className="input" placeholder="Search inventory items..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: 36 }} />
         </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
+        <div className="flex items-center justify-between gap-md" style={{ marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+          <div>
+            <h2 className="font-bold" style={{ margin: 0 }}>Chef Inventory Requests</h2>
+            <p className="text-sm text-muted" style={{ margin: '4px 0 0' }}>
+              {pendingRequests.length} pending request{pendingRequests.length === 1 ? '' : 's'} from kitchen
+            </p>
+          </div>
+          <button className="btn btn-outline btn-sm" onClick={fetchAll}>Refresh</button>
+        </div>
+        {requests.length === 0 ? (
+          <div className="text-sm text-muted">No inventory requests yet.</div>
+        ) : (
+          <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+            {requests.slice(0, 6).map((request) => (
+              <div
+                key={request._id}
+                className="card"
+                style={{
+                  background: 'var(--bg-tertiary)',
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1fr) auto',
+                  gap: 'var(--space-md)',
+                  alignItems: 'center',
+                  padding: 'var(--space-md)',
+                }}
+              >
+                <div>
+                  <div className="flex items-center gap-sm" style={{ flexWrap: 'wrap', marginBottom: 4 }}>
+                    <strong>{request.itemName}</strong>
+                    <span className={`badge ${request.status === 'pending' ? 'badge-warning' : request.status === 'approved' ? 'badge-success' : 'badge-info'}`}>
+                      {request.status}
+                    </span>
+                  </div>
+                  <div className="text-sm text-muted">
+                    {request.quantity ? `${request.quantity} ${request.unit || ''}` : 'Quantity not specified'}
+                    {' '}· Requested by {request.requestedBy?.name || 'Chef'} · {formatDate(request.createdAt)}
+                  </div>
+                  {request.note && <div className="text-sm text-muted" style={{ marginTop: 4 }}>Note: {request.note}</div>}
+                </div>
+                {request.status === 'pending' ? (
+                  <div className="flex gap-sm">
+                    <button
+                      className="btn btn-outline btn-sm"
+                      disabled={requestAction === `${request._id}:rejected`}
+                      onClick={() => updateRequestStatus(request._id, 'rejected')}
+                    >
+                      Reject
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      disabled={requestAction === `${request._id}:approved`}
+                      onClick={() => updateRequestStatus(request._id, 'approved')}
+                    >
+                      <HiOutlineCheckCircle /> Approve
+                    </button>
+                  </div>
+                ) : request.status === 'approved' ? (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={requestAction === `${request._id}:fulfilled`}
+                    onClick={() => updateRequestStatus(request._id, 'fulfilled')}
+                  >
+                    Mark Fulfilled
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-auto gap-lg">
