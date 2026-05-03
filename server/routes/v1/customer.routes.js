@@ -11,6 +11,9 @@ router.get("/loyalty", authenticate, ctrl.loyalty);
 router.post("/feedback", authenticate, ctrl.submitFeedback);
 router.post("/complaints", authenticate, ctrl.submitComplaint);
 router.get("/complaints", authenticate, ctrl.getComplaints);
+router.get("/direct-order-options", authenticate, ctrl.directOrderOptions);
+router.get("/direct-order/:mode", authenticate, ctrl.directOrderContext);
+router.get("/direct-order/:mode/:tableId", authenticate, ctrl.directOrderContext);
 router.get("/scan/table/:tableId", ctrl.scanTable);
 router.get("/room-service/:bookingId", authenticate, ctrl.roomService);
 

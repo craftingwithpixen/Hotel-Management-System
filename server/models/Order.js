@@ -4,6 +4,11 @@ const orderSchema = new mongoose.Schema(
   {
     orderCode: { type: String, unique: true, index: true },
     hotel: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true },
+    orderType: {
+      type: String,
+      enum: ["table", "room", "parcel"],
+      default: "table",
+    },
     table: { type: mongoose.Schema.Types.ObjectId, ref: "Table" },
     room: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
     booking: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" },
@@ -36,7 +41,11 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.pre("validate", function () {
-  if (!this.table && !this.room) {
+  if (!this.orderType) {
+    this.orderType = this.room ? "room" : this.table ? "table" : "parcel";
+  }
+
+  if (this.orderType !== "parcel" && !this.table && !this.room) {
     this.invalidate("table", "Either table or room is required");
   }
 

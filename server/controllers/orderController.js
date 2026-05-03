@@ -8,7 +8,8 @@ const { emitNewOrder, emitOrderUpdate, emitItemUpdate } = require("../services/s
 
 exports.create = async (req, res, next) => {
   try {
-    const { tableId, roomId, bookingId, items = [], hotelId } = req.body;
+    const { tableId, roomId, bookingId, items = [], hotelId, orderType } = req.body;
+    const isParcelOrder = orderType === "parcel";
     let table = null;
     let room = null;
     let booking = null;
@@ -33,7 +34,7 @@ exports.create = async (req, res, next) => {
       if (!booking) return res.status(403).json({ message: "No active room booking found for this order" });
     }
 
-    if (!table && !room) {
+    if (!table && !room && !isParcelOrder) {
       return res.status(400).json({ message: "Select a table or room for this order" });
     }
 
@@ -60,6 +61,7 @@ exports.create = async (req, res, next) => {
 
     const order = await Order.create({
       hotel: resolvedHotelId, table: tableId, room: roomId, booking: booking?._id || bookingId,
+      orderType: isParcelOrder ? "parcel" : roomId ? "room" : "table",
       waiter: req.user.role === "customer" ? undefined : req.user._id,
       items: orderItems, isQROrder: req.body.isQROrder || false,
       customer: req.body.customerId || (req.user.role === "customer" ? req.user._id : undefined),
