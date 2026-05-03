@@ -1,5 +1,8 @@
 const InventoryItem = require("../models/InventoryItem");
+const InventoryRequest = require("../models/InventoryRequest");
+const Notification = require("../models/Notification");
 const Supplier = require("../models/Supplier");
+const User = require("../models/User");
 const { sendLowStockAlerts } = require("../services/lowStockAlertService");
 
 exports.list = async (req, res, next) => {
@@ -139,6 +142,84 @@ exports.alerts = async (req, res, next) => {
       $expr: { $lte: ["$currentStock", "$lowStockThreshold"] }, isDeleted: false,
     }).populate("supplier");
     res.json({ items });
+  } catch (error) { next(error); }
+};
+
+exports.createRequest = async (req, res, next) => {
+  try {
+    const itemName = String(req.body.itemName || "").trim();
+    if (!itemName) return res.status(400).json({ message: "Item name is required" });
+
+    const quantity = req.body.quantity === "" || req.body.quantity === undefined
+      ? undefined
+      : Number(req.body.quantity);
+    if (quantity !== undefined && (!Number.isFinite(quantity) || quantity <= 0)) {
+      return res.status(400).json({ message: "Quantity must be greater than 0" });
+    }
+
+    const request = await InventoryRequest.create({
+      itemName,
+      quantity,
+      unit: req.body.unit || undefined,
+      note: req.body.note,
+      requestedBy: req.user._id,
+    });
+
+    const populated = await request.populate("requestedBy", "name role");
+    const recipients = await User.find({ role: { $in: ["admin", "manager"] }, isDeleted: false }).select("_id");
+    if (recipients.length) {
+      await Notification.insertMany(recipients.map((user) => ({
+        recipient: user._id,
+        type: "inventory:request",
+        message: `Inventory requested - ${itemName}`,
+        payload: {
+          requestId: request._id,
+          itemName,
+          quantity,
+          unit: req.body.unit,
+          requestedBy: req.user.name,
+        },
+      })));
+    }
+
+    req.app.get("io")?.to("admin").to("manager").emit("inventory:request", {
+      request: populated,
+    });
+
+    res.status(201).json({ request: populated });
+  } catch (error) { next(error); }
+};
+
+exports.listRequests = async (req, res, next) => {
+  try {
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+    const requests = await InventoryRequest.find(filter)
+      .populate("requestedBy", "name role")
+      .populate("actionedBy", "name role")
+      .sort({ createdAt: -1 })
+      .limit(Number(req.query.limit || 50));
+    res.json({ requests });
+  } catch (error) { next(error); }
+};
+
+exports.updateRequest = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    if (!["approved", "rejected", "fulfilled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid request status" });
+    }
+
+    const request = await InventoryRequest.findByIdAndUpdate(
+      req.params.id,
+      { status, actionedBy: req.user._id, actionedAt: new Date() },
+      { new: true }
+    )
+      .populate("requestedBy", "name role")
+      .populate("actionedBy", "name role");
+
+    if (!request) return res.status(404).json({ message: "Inventory request not found" });
+    res.json({ request });
   } catch (error) { next(error); }
 };
 
