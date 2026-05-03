@@ -21,19 +21,18 @@ const goldButton = {
 export default function DirectOrder() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const [mode, setMode] = useState('table');
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated || mode !== 'table') return;
+    if (!isAuthenticated) return;
 
     setLoading(true);
     api.get('/customer/direct-order-options')
       .then(({ data }) => setTables(data.tables || []))
       .catch((err) => toast.error(err.response?.data?.message || 'Failed to load available tables'))
       .finally(() => setLoading(false));
-  }, [isAuthenticated, mode]);
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
@@ -71,54 +70,41 @@ export default function DirectOrder() {
       </section>
 
       <div className="direct-order-card">
-        <div className="direct-order-segments">
-          <button type="button" className={mode === 'table' ? 'active' : ''} onClick={() => setMode('table')}>
-            <HiOutlineTable /> On Table
+        {/* <div className="direct-order-parcel">
+          <div>
+            <h2 className="font-bold">Parcel pickup</h2>
+            <p>Order food and collect it from the counter once the kitchen marks it ready.</p>
+          </div>
+          <button type="button" style={goldButton} onClick={() => navigate('/customer/direct-order/parcel')}>
+            Start Parcel Order <HiOutlineArrowRight />
           </button>
-          <button type="button" className={mode === 'parcel' ? 'active' : ''} onClick={() => setMode('parcel')}>
-            <HiOutlineShoppingBag /> Parcel
-          </button>
+        </div> */}
+
+        <div className="direct-order-heading">
+          <span><HiOutlineTable /></span>
+          <div>
+            <h2 className="font-bold">Available tables</h2>
+            <p>Select where you want the order served.</p>
+          </div>
         </div>
 
-        {mode === 'table' ? (
-          <>
-            <div className="direct-order-heading">
-              <span><HiOutlineTable /></span>
-              <div>
-                <h2 className="font-bold">Available tables</h2>
-                <p>Select where you want the order served.</p>
-              </div>
-            </div>
-
-            {loading ? (
-              <div style={{ padding: 'var(--space-lg)' }}><div className="spinner" /></div>
-            ) : tables.length === 0 ? (
-              <div className="direct-order-empty">No available tables right now.</div>
-            ) : (
-              <div className="direct-order-table-grid">
-                {tables.map((table) => (
-                  <button
-                    key={table._id}
-                    type="button"
-                    onClick={() => navigate(`/customer/direct-order/table/${table._id}`)}
-                  >
-                    <strong>{table.tableNumber}</strong>
-                    <span>{table.capacity} seats</span>
-                    <small>{table.location || 'Dining'}</small>
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
+        {loading ? (
+          <div style={{ padding: 'var(--space-lg)' }}><div className="spinner" /></div>
+        ) : tables.length === 0 ? (
+          <div className="direct-order-empty">No available tables right now.</div>
         ) : (
-          <div className="direct-order-parcel">
-            <div>
-              <h2 className="font-bold">Parcel pickup</h2>
-              <p>Order food and collect it from the counter once the kitchen marks it ready.</p>
-            </div>
-            <button type="button" style={goldButton} onClick={() => navigate('/customer/direct-order/parcel')}>
-              Start Parcel Order <HiOutlineArrowRight />
-            </button>
+          <div className="direct-order-table-grid">
+            {tables.map((table) => (
+              <button
+                key={table._id}
+                type="button"
+                onClick={() => navigate(`/customer/direct-order/table/${table._id}`)}
+              >
+                <strong>{table.tableNumber}</strong>
+                <span>{table.capacity} seats</span>
+                <small>{table.location || 'Dining'}</small>
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -140,33 +126,6 @@ export default function DirectOrder() {
           border-radius: var(--radius-xl);
           background: rgba(255,255,255,0.03);
           box-shadow: 0 14px 26px rgba(0,0,0,0.25);
-        }
-        .direct-order-segments {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: var(--space-sm);
-          margin-bottom: var(--space-lg);
-          padding: 4px;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 999px;
-          background: rgba(255,255,255,0.035);
-        }
-        .direct-order-segments button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: var(--space-sm);
-          border: 0;
-          border-radius: 999px;
-          padding: 0.7rem 1rem;
-          cursor: pointer;
-          font-weight: 800;
-          background: transparent;
-          color: #9aa6a0;
-        }
-        .direct-order-segments button.active {
-          background: rgba(181,167,118,0.24);
-          color: #f4e6b7;
         }
         .direct-order-heading {
           display: flex;
