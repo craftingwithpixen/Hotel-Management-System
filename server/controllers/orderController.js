@@ -1,17 +1,44 @@
 const Order = require("../models/Order");
 const Table = require("../models/Table");
+const Room = require("../models/Room");
 const MenuItem = require("../models/MenuItem");
 const Hotel = require("../models/Hotel");
+const Booking = require("../models/Booking");
 const { emitNewOrder, emitOrderUpdate, emitItemUpdate } = require("../services/socketService");
 
 exports.create = async (req, res, next) => {
   try {
-    const { tableId, items, hotelId } = req.body;
-    const table = await Table.findById(tableId).select("hotel status");
-    if (!table) return res.status(404).json({ message: "Table not found" });
+    const { tableId, roomId, bookingId, items = [], hotelId } = req.body;
+    let table = null;
+    let room = null;
+    let booking = null;
+
+    if (tableId) {
+      table = await Table.findById(tableId).select("hotel status");
+      if (!table) return res.status(404).json({ message: "Table not found" });
+    }
+
+    if (roomId) {
+      room = await Room.findById(roomId).select("hotel roomNumber status");
+      if (!room) return res.status(404).json({ message: "Room not found" });
+
+      if (!bookingId) return res.status(400).json({ message: "Room booking is required for room service orders" });
+      booking = await Booking.findOne({
+        _id: bookingId,
+        room: roomId,
+        type: "room",
+        customer: req.user._id,
+        status: { $in: ["confirmed", "checked_in"] },
+      }).select("_id");
+      if (!booking) return res.status(403).json({ message: "No active room booking found for this order" });
+    }
+
+    if (!table && !room) {
+      return res.status(400).json({ message: "Select a table or room for this order" });
+    }
 
     // Resolve hotel safely even when client does not send hotelId.
-    let resolvedHotelId = hotelId || table.hotel;
+    let resolvedHotelId = hotelId || table?.hotel || room?.hotel;
     if (!resolvedHotelId) {
       const defaultHotel = await Hotel.findOne().select("_id");
       resolvedHotelId = defaultHotel?._id;
@@ -23,19 +50,22 @@ exports.create = async (req, res, next) => {
     const orderItems = [];
     for (const item of items) {
       const menuItem = await MenuItem.findById(item.menuItemId);
-      if (!menuItem) continue;
+      if (!menuItem || menuItem.isDeleted || menuItem.isAvailable === false) continue;
       orderItems.push({
         menuItem: menuItem._id, quantity: item.quantity,
         notes: item.notes, price: menuItem.price, status: "pending",
       });
     }
+    if (orderItems.length === 0) return res.status(400).json({ message: "Add at least one available menu item" });
+
     const order = await Order.create({
-      hotel: resolvedHotelId, table: tableId, waiter: req.user._id,
+      hotel: resolvedHotelId, table: tableId, room: roomId, booking: booking?._id || bookingId,
+      waiter: req.user.role === "customer" ? undefined : req.user._id,
       items: orderItems, isQROrder: req.body.isQROrder || false,
-      customer: req.body.customerId,
+      customer: req.body.customerId || (req.user.role === "customer" ? req.user._id : undefined),
     });
-    await Table.findByIdAndUpdate(tableId, { status: "occupied" });
-    const populated = await order.populate("table waiter items.menuItem");
+    if (tableId) await Table.findByIdAndUpdate(tableId, { status: "occupied" });
+    const populated = await order.populate("table room waiter items.menuItem");
     if (req.app.get("io")) emitNewOrder(req.app.get("io"), populated);
     res.status(201).json({ order: populated });
   } catch (error) { next(error); }
@@ -52,7 +82,7 @@ exports.list = async (req, res, next) => {
       filter.createdAt = { $gte: d, $lt: new Date(d.getTime() + 86400000) };
     }
     const orders = await Order.find(filter)
-      .populate("table waiter items.menuItem")
+      .populate("table room waiter items.menuItem")
       .sort({ createdAt: -1 }).skip((page - 1) * limit).limit(Number(limit));
     const total = await Order.countDocuments(filter);
     res.json({ orders, total, page: Number(page) });
@@ -62,14 +92,14 @@ exports.list = async (req, res, next) => {
 exports.kitchen = async (req, res, next) => {
   try {
     const orders = await Order.find({ overallStatus: { $in: ["pending", "preparing", "ready"] } })
-      .populate("table waiter items.menuItem").sort({ createdAt: 1 });
+      .populate("table room waiter items.menuItem").sort({ createdAt: 1 });
     res.json({ orders });
   } catch (error) { next(error); }
 };
 
 exports.getById = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id).populate("table waiter items.menuItem customer");
+    const order = await Order.findById(req.params.id).populate("table room waiter items.menuItem customer");
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json({ order });
   } catch (error) { next(error); }
@@ -97,7 +127,7 @@ exports.updateItems = async (req, res, next) => {
 exports.updateStatus = async (req, res, next) => {
   try {
     const order = await Order.findByIdAndUpdate(req.params.id,
-      { overallStatus: req.body.status }, { new: true }).populate("table waiter");
+      { overallStatus: req.body.status }, { new: true }).populate("table room waiter");
     if (req.app.get("io")) emitOrderUpdate(req.app.get("io"), order);
     res.json({ order });
   } catch (error) { next(error); }

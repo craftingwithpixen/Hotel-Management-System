@@ -18,20 +18,47 @@ const notifyRoles = async (roles, { type, message, payload }) => {
 };
 
 const emitNewOrder = (io, order) => {
+  const sourceLabel = order.table?.tableNumber
+    ? `Table ${order.table.tableNumber}`
+    : `Room ${order.room?.roomNumber || "Unknown"}`;
+
   io.to("kitchen").emit("new:order", {
     orderId: order._id,
     tableNumber: order.table?.tableNumber,
+    roomNumber: order.room?.roomNumber,
+    sourceType: order.room ? "room" : "table",
     items: order.items,
     waiterName: order.waiter?.name,
   });
+
+  io.to("waiter").emit("new:room-service-order", {
+    orderId: order._id,
+    roomNumber: order.room?.roomNumber,
+    sourceType: order.room ? "room" : "table",
+    items: order.items,
+    createdAt: order.createdAt,
+  });
+
+  if (order.room) {
+    void notifyRoles(["waiter", "manager", "admin"], {
+      type: "room:order",
+      message: `Room service order — ${sourceLabel}`,
+      payload: {
+        orderId: order._id,
+        roomNumber: order.room?.roomNumber,
+      },
+    }).catch(() => {});
+  }
 };
 
 const emitOrderUpdate = (io, order) => {
-  io.to(`table:${order.table}`).emit("order:update", {
-    orderId: order._id,
-    overallStatus: order.overallStatus,
-    items: order.items,
-  });
+  if (order.table) {
+    io.to(`table:${order.table}`).emit("order:update", {
+      orderId: order._id,
+      overallStatus: order.overallStatus,
+      items: order.items,
+    });
+  }
   if (order.waiter) {
     io.to(`waiter:${order.waiter}`).emit("order:update", {
       orderId: order._id,
@@ -41,11 +68,13 @@ const emitOrderUpdate = (io, order) => {
 };
 
 const emitItemUpdate = (io, order, itemId, status) => {
-  io.to(`table:${order.table}`).emit("item:update", {
-    orderId: order._id,
-    itemId,
-    status,
-  });
+  if (order.table) {
+    io.to(`table:${order.table}`).emit("item:update", {
+      orderId: order._id,
+      itemId,
+      status,
+    });
+  }
 };
 
 const emitNewBooking = (io, booking) => {
