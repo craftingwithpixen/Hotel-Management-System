@@ -199,6 +199,7 @@ function App() {
           <Route path="profile"    element={<Profile />} />
           <Route path="book-room"  element={<BookRoom />} />
           <Route path="book-table" element={<BookTable />} />
+          <Route path="room-order/:bookingId" element={<ScanTable />} />
         </Route>
 
         {/* ── Public landing ───────────────────────────────────── */}

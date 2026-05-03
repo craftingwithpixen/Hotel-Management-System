@@ -39,6 +39,7 @@ exports.generate = async (req, res, next) => {
     let items = [], type = "restaurant", customer, order, booking;
     let resolvedOrderId = null;
     let resolvedBookingId = null;
+    let roomServiceOrderIds = [];
 
     if (orderId) {
       order = Types.ObjectId.isValid(orderId)
@@ -57,11 +58,12 @@ exports.generate = async (req, res, next) => {
         ? await Booking.findById(bookingId).populate("room customer")
         : await Booking.findOne({ bookingCode: String(bookingId).trim().toUpperCase() }).populate("room customer");
       if (!booking) return res.status(404).json({ message: "Booking not found" });
-      const roomBill = computeRoomBill(booking, hotel);
+      const roomBill = await computeRoomBill(booking, hotel);
       items = roomBill.items;
       customer = roomBill.customerId;
       type = roomBill.type;
       resolvedBookingId = booking._id;
+      roomServiceOrderIds = roomBill.roomServiceOrderIds || [];
     } else {
       return res.status(400).json({ message: "orderId or bookingId is required" });
     }
@@ -78,6 +80,12 @@ exports.generate = async (req, res, next) => {
       generatedBy: req.user._id,
     });
     if (resolvedOrderId) await Order.findByIdAndUpdate(resolvedOrderId, { billing: bill._id, overallStatus: "billed" });
+    if (roomServiceOrderIds.length) {
+      await Order.updateMany(
+        { _id: { $in: roomServiceOrderIds } },
+        { billing: bill._id, overallStatus: "billed" }
+      );
+    }
     if (resolvedBookingId) await Booking.findByIdAndUpdate(resolvedBookingId, { billing: bill._id });
 
     res.status(201).json({ billing: bill });

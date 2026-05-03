@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle, HiOutlineX } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle, HiOutlineX, HiOutlineClock } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -9,12 +9,20 @@ export default function Inventory() {
   const [hotelId, setHotelId] = useState(null);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [restockItem, setRestockItem] = useState(null);
+  const [historyItem, setHistoryItem] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [restocking, setRestocking] = useState(false);
   const [form, setForm] = useState({
     name: '',
     category: 'Grains',
     currentStock: '',
     unit: 'kg',
     lowStockThreshold: '',
+  });
+  const [restockForm, setRestockForm] = useState({
+    qty: '',
+    costPerUnit: '',
   });
 
   const fetchAll = async () => {
@@ -37,6 +45,61 @@ export default function Inventory() {
   }, []);
 
   const filtered = items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()));
+
+  const formatDate = (date) => {
+    if (!date) return 'Not recorded';
+    return new Date(date).toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const openRestock = (item) => {
+    setRestockItem(item);
+    setRestockForm({ qty: '', costPerUnit: '' });
+  };
+
+  const submitRestock = async (e) => {
+    e.preventDefault();
+    if (!restockItem) return;
+
+    const qty = Number(restockForm.qty);
+    const costPerUnit = Number(restockForm.costPerUnit);
+    if (!Number.isFinite(qty) || qty <= 0) return toast.error('Enter a valid restock quantity');
+    if (!Number.isFinite(costPerUnit) || costPerUnit < 0) return toast.error('Enter a valid unit cost');
+
+    setRestocking(true);
+    try {
+      const { data } = await api.post(`/inventory/${restockItem._id}/restock`, {
+        qty,
+        costPerUnit,
+      });
+      setItems((prev) => prev.map((item) => item._id === data.item?._id ? data.item : item));
+      setRestockItem(null);
+      setRestockForm({ qty: '', costPerUnit: '' });
+      toast.success('Stock updated');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to restock item');
+    } finally {
+      setRestocking(false);
+    }
+  };
+
+  const openHistory = async (item) => {
+    setHistoryItem(item);
+    setHistoryLoading(true);
+    try {
+      const { data } = await api.get(`/inventory/${item._id}`);
+      setHistoryItem(data.item || item);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to load inventory history');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   return (
     <div className="animate-fade">
@@ -94,11 +157,11 @@ export default function Inventory() {
                 <button
                   className="btn btn-outline btn-sm"
                   style={{ flex: 1 }}
-                  onClick={() => toast('Restock is available via Inventory API endpoints')}
+                  onClick={() => openRestock(item)}
                 >
                   Restock
                 </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => toast('History is available on the inventory detail screen')}>
+                <button className="btn btn-ghost btn-sm" onClick={() => openHistory(item)}>
                   History
                 </button>
               </div>
@@ -172,6 +235,171 @@ export default function Inventory() {
                 <button type="submit" className="btn btn-primary">Add to Inventory</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {restockItem && (
+        <div className="modal-overlay" onClick={() => setRestockItem(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <div className="modal-header">
+              <h2>Restock {restockItem.name}</h2>
+              <button className="btn btn-ghost btn-icon" onClick={() => setRestockItem(null)}><HiOutlineX /></button>
+            </div>
+            <div className="card" style={{ background: 'var(--bg-tertiary)', marginBottom: 'var(--space-lg)' }}>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted">Current stock</span>
+                <strong>{restockItem.currentStock} {restockItem.unit}</strong>
+              </div>
+              <div className="flex justify-between text-sm" style={{ marginTop: 'var(--space-xs)' }}>
+                <span className="text-muted">Low stock threshold</span>
+                <strong>{restockItem.lowStockThreshold} {restockItem.unit}</strong>
+              </div>
+            </div>
+            <form onSubmit={submitRestock}>
+              <div className="grid grid-2 gap-md mb-lg">
+                <div className="input-group">
+                  <label>Quantity ({restockItem.unit})</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={restockForm.qty}
+                    onChange={e => setRestockForm({ ...restockForm, qty: e.target.value })}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Cost per {restockItem.unit}</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={restockForm.costPerUnit}
+                    onChange={e => setRestockForm({ ...restockForm, costPerUnit: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-md justify-end">
+                <button type="button" className="btn btn-outline" onClick={() => setRestockItem(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={restocking}>
+                  {restocking ? 'Saving...' : 'Update Stock'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {historyItem && (
+        <div className="modal-overlay" onClick={() => setHistoryItem(null)}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ maxHeight: '88vh', overflowY: 'auto', maxWidth: 820 }}>
+            <div className="modal-header">
+              <h2>{historyItem.name} History</h2>
+              <button className="btn btn-ghost btn-icon" onClick={() => setHistoryItem(null)}><HiOutlineX /></button>
+            </div>
+
+            {historyLoading ? (
+              <div style={{ textAlign: 'center', padding: 32 }}><div className="spinner" /></div>
+            ) : (
+              <>
+                <div className="grid gap-md mb-lg" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                  <div className="card" style={{ background: 'var(--bg-tertiary)' }}>
+                    <div className="text-xs text-muted">Current Stock</div>
+                    <div className="font-bold">{historyItem.currentStock} {historyItem.unit}</div>
+                  </div>
+                  <div className="card" style={{ background: 'var(--bg-tertiary)' }}>
+                    <div className="text-xs text-muted">Threshold</div>
+                    <div className="font-bold">{historyItem.lowStockThreshold} {historyItem.unit}</div>
+                  </div>
+                  <div className="card" style={{ background: 'var(--bg-tertiary)' }}>
+                    <div className="text-xs text-muted">Last Restocked</div>
+                    <div className="font-bold text-sm">{formatDate(historyItem.lastRestockedAt)}</div>
+                  </div>
+                </div>
+
+                <section style={{ marginBottom: 'var(--space-xl)' }}>
+                  <h3 className="font-bold mb-md">Purchase History</h3>
+                  {(historyItem.purchaseHistory || []).length === 0 ? (
+                    <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No purchase history recorded</div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+                      {[...(historyItem.purchaseHistory || [])].reverse().map((row, idx) => (
+                        <div
+                          key={row._id || idx}
+                          className="card"
+                          style={{
+                            background: 'var(--bg-tertiary)',
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(180px, 1.5fr) repeat(3, minmax(92px, 1fr))',
+                            gap: 'var(--space-md)',
+                            alignItems: 'center',
+                            padding: 'var(--space-md)',
+                          }}
+                        >
+                          <div>
+                            <div className="text-xs text-muted">Date</div>
+                            <div className="font-medium">{formatDate(row.date)}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted">Qty</div>
+                            <div className="font-bold">{row.qty} {historyItem.unit}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted">Cost / Unit</div>
+                            <div className="font-bold">₹{Number(row.costPerUnit || 0).toLocaleString('en-IN')}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted">Total</div>
+                            <div className="font-bold">₹{Number(row.total || 0).toLocaleString('en-IN')}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section>
+                  <h3 className="font-bold mb-md">Consumption History</h3>
+                  {(historyItem.dailyConsumption || []).length === 0 ? (
+                    <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No consumption history recorded</div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+                      {[...(historyItem.dailyConsumption || [])].reverse().map((row, idx) => (
+                        <div
+                          key={row._id || idx}
+                          className="card"
+                          style={{
+                            background: 'var(--bg-tertiary)',
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(220px, 4fr) minmax(100px, 0.7fr) minmax(160px, 1fr)',
+                            gap: 'var(--space-md)',
+                            alignItems: 'center',
+                            padding: 'var(--space-md)',
+                          }}
+                        >
+                          <div>
+                            <div className="text-xs text-muted">Date</div>
+                            <div className="font-medium">
+                              <HiOutlineClock style={{ display: 'inline', marginRight: 6 }} />
+                              {formatDate(row.date)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted">Qty Used</div>
+                            <div className="font-bold">{row.quantity} {historyItem.unit}</div>
+                          </div>
+                          
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
           </div>
         </div>
       )}

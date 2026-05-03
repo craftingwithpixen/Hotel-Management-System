@@ -36,7 +36,7 @@ exports.bookings = async (req, res, next) => {
 exports.orders = async (req, res, next) => {
   try {
     const orders = await Order.find({ customer: req.user._id })
-      .populate("items.menuItem table").sort({ createdAt: -1 });
+      .populate("items.menuItem table room").sort({ createdAt: -1 });
     res.json({ orders });
   } catch (error) { next(error); }
 };
@@ -83,5 +83,31 @@ exports.scanTable = async (req, res, next) => {
     if (!table) return res.status(404).json({ message: "Table not found" });
     const menu = await MenuItem.find({ hotel: table.hotel._id, isDeleted: false, isAvailable: true });
     res.json({ table, menu });
+  } catch (error) { next(error); }
+};
+
+exports.roomService = async (req, res, next) => {
+  try {
+    const booking = await Booking.findOne({
+      _id: req.params.bookingId,
+      customer: req.user._id,
+      type: "room",
+      status: { $in: ["confirmed", "checked_in"] },
+    }).populate({
+      path: "room",
+      populate: { path: "hotel", select: "name" },
+    });
+
+    if (!booking || !booking.room) {
+      return res.status(404).json({ message: "Active room booking not found" });
+    }
+
+    const menu = await MenuItem.find({
+      hotel: booking.room.hotel._id,
+      isDeleted: false,
+      isAvailable: true,
+    });
+
+    res.json({ booking, room: booking.room, hotel: booking.room.hotel, menu });
   } catch (error) { next(error); }
 };

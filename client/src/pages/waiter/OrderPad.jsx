@@ -70,10 +70,15 @@ export default function OrderPad() {
     const offResolved = on('table:help:resolved', (payload) => {
       setHelpRequests((prev) => prev.filter((item) => item._id !== payload.helpRequestId));
     });
+    const offRoomOrder = on('new:room-service-order', (payload) => {
+      if (payload?.sourceType !== 'room') return;
+      toast(`Room ${payload.roomNumber || '-'} placed a food order`);
+    });
 
     return () => {
       if (offHelp) offHelp();
       if (offResolved) offResolved();
+      if (offRoomOrder) offRoomOrder();
     };
   }, [on]);
 
