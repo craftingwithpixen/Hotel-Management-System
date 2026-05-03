@@ -1,6 +1,7 @@
 const Booking = require("../models/Booking");
 const Room = require("../models/Room");
 const Table = require("../models/Table");
+const Order = require("../models/Order");
 const Hotel = require("../models/Hotel");
 const Billing = require("../models/Billing");
 const Payment = require("../models/Payment");
@@ -132,7 +133,7 @@ exports.checkOut = async (req, res, next) => {
     // Auto-create a draft room billing record on checkout.
     if (booking.type === "room" && booking.room && !booking.billing) {
       const hotel = await Hotel.findOne();
-      const roomBill = computeRoomBill(booking, hotel);
+      const roomBill = await computeRoomBill(booking, hotel);
       const bill = await Billing.create({
         hotel: hotel?._id,
         type: "room",
@@ -148,6 +149,13 @@ exports.checkOut = async (req, res, next) => {
 
       booking.billing = bill._id;
       await booking.save();
+
+      if (roomBill.roomServiceOrderIds?.length) {
+        await Order.updateMany(
+          { _id: { $in: roomBill.roomServiceOrderIds } },
+          { billing: bill._id, overallStatus: "billed" }
+        );
+      }
     }
 
     res.json({ booking });

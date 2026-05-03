@@ -12,5 +12,6 @@ router.post("/feedback", authenticate, ctrl.submitFeedback);
 router.post("/complaints", authenticate, ctrl.submitComplaint);
 router.get("/complaints", authenticate, ctrl.getComplaints);
 router.get("/scan/table/:tableId", ctrl.scanTable);
+router.get("/room-service/:bookingId", authenticate, ctrl.roomService);
 
 module.exports = router;

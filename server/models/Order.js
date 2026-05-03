@@ -4,9 +4,10 @@ const orderSchema = new mongoose.Schema(
   {
     orderCode: { type: String, unique: true, index: true },
     hotel: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel", required: true },
-    table: { type: mongoose.Schema.Types.ObjectId, ref: "Table", required: true },
+    table: { type: mongoose.Schema.Types.ObjectId, ref: "Table" },
+    room: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
     booking: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" },
-    waiter: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    waiter: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     items: [
       {
         menuItem: { type: mongoose.Schema.Types.ObjectId, ref: "MenuItem", required: true },
@@ -35,6 +36,10 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.pre("validate", function () {
+  if (!this.table && !this.room) {
+    this.invalidate("table", "Either table or room is required");
+  }
+
   if (!this.orderCode) {
     const idPart = this._id ? this._id.toString().slice(-6).toUpperCase() : Date.now().toString().slice(-6);
     this.orderCode = `ORD-${idPart}`;

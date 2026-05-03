@@ -26,10 +26,13 @@ const goldButton = {
 };
 
 export default function ScanTable() {
-  const { tableId } = useParams();
+  const { tableId, bookingId } = useParams();
+  const isRoomOrder = Boolean(bookingId);
   const { isAuthenticated, user, preferredLang } = useAuthStore();
   const t = getCustomerText(user?.preferredLang || preferredLang);
   const [tableData, setTableData] = useState(null);
+  const [roomData, setRoomData] = useState(null);
+  const [bookingData, setBookingData] = useState(null);
   const [menu, setMenu] = useState([]);
   const [cart, setCart] = useState([]);
   const [category, setCategory] = useState('all');
@@ -38,11 +41,20 @@ export default function ScanTable() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    api.get(`/customer/scan/table/${tableId}`)
-      .then(({ data }) => { setTableData(data.table); setMenu(data.menu || []); })
-      .catch(() => toast.error(t('invalidTableQr')))
+    const url = isRoomOrder
+      ? `/customer/room-service/${bookingId}`
+      : `/customer/scan/table/${tableId}`;
+
+    api.get(url)
+      .then(({ data }) => {
+        setTableData(data.table || null);
+        setRoomData(data.room || null);
+        setBookingData(data.booking || null);
+        setMenu(data.menu || []);
+      })
+      .catch(() => toast.error(isRoomOrder ? 'Room service is not available for this booking' : t('invalidTableQr')))
       .finally(() => setLoading(false));
-  }, [tableId]);
+  }, [tableId, bookingId, isRoomOrder]);
 
   const categories = ['all', ...new Set(menu.map(i => i.category))];
   const filtered = menu.filter(i => category === 'all' || i.category === category);
@@ -64,9 +76,11 @@ export default function ScanTable() {
     setSubmitting(true);
     try {
       await api.post('/orders', {
-        tableId,
+        tableId: isRoomOrder ? undefined : tableId,
+        roomId: isRoomOrder ? roomData?._id : undefined,
+        bookingId: isRoomOrder ? bookingData?._id : undefined,
         items: cart.map(c => ({ menuItemId: c.menuItem._id, quantity: c.quantity, notes: c.notes })),
-        isQROrder: true,
+        isQROrder: !isRoomOrder,
         customerId: user?._id,
       });
       setSubmitted(true);
@@ -109,7 +123,11 @@ export default function ScanTable() {
         <HiOutlineCheckCircle style={{ fontSize: '5rem', color: '#8dd7b5', marginBottom: 'var(--space-lg)' }} />
         <h2 className="font-bold text-xl" style={{ marginBottom: 'var(--space-sm)' }}>{t('orderPlaced')}</h2>
         <p style={{ textAlign: 'center', color: '#b7c1bb', maxWidth: 520 }}>
-          {t('orderPlacedMessage')} <strong>{tableData?.hotel?.name}</strong> · {t('table')} <strong>{tableData?.tableNumber}</strong>
+          {t('orderPlacedMessage')}{' '}
+          <strong>{isRoomOrder ? roomData?.hotel?.name : tableData?.hotel?.name}</strong>
+          {' · '}
+          {isRoomOrder ? 'Room' : t('table')}{' '}
+          <strong>{isRoomOrder ? roomData?.roomNumber : tableData?.tableNumber}</strong>
         </p>
         <button
           type="button"
@@ -147,13 +165,13 @@ export default function ScanTable() {
         >
           <div className="scan-table-hero-content" style={{ padding: '1.75rem' }}>
             <p className="scan-table-eyebrow" style={{ fontSize: '0.7rem', letterSpacing: '0.24em', color: '#d8c69b', marginBottom: 8 }}>
-              {t('scanAndOrder')}
+              {isRoomOrder ? 'ROOM SERVICE' : t('scanAndOrder')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', lineHeight: 1.15, marginBottom: 8 }}>
-              {tableData?.hotel?.name || 'Grand Paradise'}
+              {isRoomOrder ? (roomData?.hotel?.name || 'Grand Paradise') : (tableData?.hotel?.name || 'Grand Paradise')}
             </h1>
             <p style={{ color: '#c5cdc8' }}>
-              {t('table')} {tableData?.tableNumber} · {t('scanOrderIntro')}
+              {isRoomOrder ? `Room ${roomData?.roomNumber || '-'} · ${t('scanOrderIntro')}` : `${t('table')} ${tableData?.tableNumber} · ${t('scanOrderIntro')}`}
             </p>
           </div>
         </div>
