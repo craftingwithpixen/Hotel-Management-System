@@ -21,7 +21,9 @@ export default function Orders() {
   const { user } = useAuthStore();
   const canSendKOT = ['admin', 'waiter'].includes(user?.role);
   const getOrderSource = (order) => (
-    order.room?.roomNumber
+    order.orderType === 'parcel'
+      ? 'Parcel'
+      : order.room?.roomNumber
       ? `Room ${order.room.roomNumber}`
       : order.table?.tableNumber || '—'
   );

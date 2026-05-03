@@ -10,6 +10,7 @@ import {
   HiOutlineX,
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
+import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import { getCustomerText } from '../../i18n/customerText';
 
@@ -45,10 +46,13 @@ const extractTableId = (value) => {
 
 export default function ScanQr() {
   const navigate = useNavigate();
-  const { user, preferredLang } = useAuthStore();
+  const { isAuthenticated, user, preferredLang } = useAuthStore();
   const t = getCustomerText(user?.preferredLang || preferredLang);
   const [qrValue, setQrValue] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [directMode, setDirectMode] = useState('table');
+  const [tables, setTables] = useState([]);
+  const [tablesLoading, setTablesLoading] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const scanFrameRef = useRef(null);
@@ -63,6 +67,16 @@ export default function ScanQr() {
 
   useEffect(() => () => stopScanner(), []);
 
+  useEffect(() => {
+    if (!isAuthenticated || directMode !== 'table') return;
+
+    setTablesLoading(true);
+    api.get('/customer/direct-order-options')
+      .then(({ data }) => setTables(data.tables || []))
+      .catch(() => toast.error('Failed to load available tables'))
+      .finally(() => setTablesLoading(false));
+  }, [isAuthenticated, directMode]);
+
   const openTableValue = (value) => {
     const tableId = extractTableId(value);
     if (!tableId) {
@@ -74,6 +88,15 @@ export default function ScanQr() {
 
   const handleOpen = () => {
     openTableValue(qrValue);
+  };
+
+  const openParcelOrder = () => {
+    if (!isAuthenticated) {
+      toast.error(t('loginToOrder'));
+      navigate('/login');
+      return;
+    }
+    navigate('/customer/direct-order/parcel');
   };
 
   const startScanner = async () => {
@@ -230,6 +253,64 @@ export default function ScanQr() {
                 </div>
               </div>
             )}
+
+            <div className="customer-direct-order">
+              <div className="flex items-center gap-sm" style={{ marginBottom: 'var(--space-md)' }}>
+                <span className="customer-scan-icon"><HiOutlineSparkles /></span>
+                <div>
+                  <h2 className="font-bold" style={{ color: '#f4f5ef', margin: 0, fontSize: '1.1rem' }}>Order directly</h2>
+                  <p style={{ color: '#8a9690', fontSize: '0.86rem', margin: '2px 0 0' }}>Choose table service or parcel pickup.</p>
+                </div>
+              </div>
+
+              <div className="customer-direct-segments">
+                <button
+                  type="button"
+                  className={directMode === 'table' ? 'active' : ''}
+                  onClick={() => setDirectMode('table')}
+                >
+                  On Table
+                </button>
+                <button
+                  type="button"
+                  className={directMode === 'parcel' ? 'active' : ''}
+                  onClick={() => setDirectMode('parcel')}
+                >
+                  Parcel
+                </button>
+              </div>
+
+              {directMode === 'table' ? (
+                <div>
+                  <p className="text-sm" style={{ color: '#c5cdc8', marginBottom: 'var(--space-sm)' }}>Available tables</p>
+                  {tablesLoading ? (
+                    <div style={{ padding: 'var(--space-md)' }}><div className="spinner" /></div>
+                  ) : tables.length === 0 ? (
+                    <div className="customer-empty-inline">No available tables right now.</div>
+                  ) : (
+                    <div className="customer-table-picker">
+                      {tables.map((table) => (
+                        <button
+                          key={table._id}
+                          type="button"
+                          onClick={() => navigate(`/customer/direct-order/table/${table._id}`)}
+                        >
+                          <strong>{table.tableNumber}</strong>
+                          <span>{table.capacity} seats</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="customer-parcel-panel">
+                  <p>Place a parcel order and collect it from the counter once the kitchen marks it ready.</p>
+                  <button type="button" style={goldButton} onClick={openParcelOrder}>
+                    Start Parcel Order <HiOutlineArrowRight />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <aside className="customer-scan-card customer-scan-guide">
@@ -406,6 +487,148 @@ export default function ScanQr() {
           border-radius: var(--radius-lg);
           box-shadow: 0 0 0 999px rgba(0,0,0,0.28);
         }
+        .customer-direct-order {
+          margin-top: var(--space-lg);
+          padding-top: var(--space-lg);
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .customer-direct-segments {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-sm);
+          margin-bottom: var(--space-md);
+          padding: 4px;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 999px;
+          background: rgba(255,255,255,0.035);
+        }
+        .customer-direct-segments button {
+          border: 0;
+          border-radius: 999px;
+          padding: 0.62rem 0.85rem;
+          cursor: pointer;
+          font-weight: 800;
+          background: transparent;
+          color: #9aa6a0;
+        }
+        .customer-direct-segments button.active {
+          background: rgba(181,167,118,0.24);
+          color: #f4e6b7;
+        }
+        .customer-table-picker {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+          gap: var(--space-sm);
+        }
+        .customer-table-picker button {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 2px;
+          padding: var(--space-md);
+          border: 1px solid rgba(210,196,149,0.28);
+          border-radius: var(--radius-lg);
+          background: rgba(181,167,118,0.08);
+          color: #f4f5ef;
+          cursor: pointer;
+          text-align: left;
+        }
+        .customer-table-picker button span,
+        .customer-parcel-panel p,
+        .customer-empty-inline {
+          color: #8a9690;
+          font-size: 0.84rem;
+        }
+        .customer-empty-inline {
+          padding: var(--space-md);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: var(--radius-lg);
+          background: rgba(255,255,255,0.03);
+        }
+        .customer-parcel-panel {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-md);
+          padding: var(--space-md);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: var(--radius-lg);
+          background: rgba(255,255,255,0.03);
+        }
+        .customer-parcel-panel p {
+          margin: 0;
+        }
+        .customer-direct-order {
+          margin-top: var(--space-lg);
+          padding-top: var(--space-lg);
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .customer-direct-segments {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: var(--space-sm);
+          margin-bottom: var(--space-md);
+          padding: 4px;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 999px;
+          background: rgba(255,255,255,0.035);
+        }
+        .customer-direct-segments button {
+          border: 0;
+          border-radius: 999px;
+          padding: 0.62rem 0.85rem;
+          cursor: pointer;
+          font-weight: 800;
+          background: transparent;
+          color: #9aa6a0;
+        }
+        .customer-direct-segments button.active {
+          background: rgba(181,167,118,0.24);
+          color: #f4e6b7;
+        }
+        .customer-table-picker {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+          gap: var(--space-sm);
+        }
+        .customer-table-picker button {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 2px;
+          padding: var(--space-md);
+          border: 1px solid rgba(210,196,149,0.28);
+          border-radius: var(--radius-lg);
+          background: rgba(181,167,118,0.08);
+          color: #f4f5ef;
+          cursor: pointer;
+          text-align: left;
+        }
+        .customer-table-picker button span,
+        .customer-parcel-panel p,
+        .customer-empty-inline {
+          color: #8a9690;
+          font-size: 0.84rem;
+        }
+        .customer-empty-inline {
+          padding: var(--space-md);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: var(--radius-lg);
+          background: rgba(255,255,255,0.03);
+        }
+        .customer-parcel-panel {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--space-md);
+          padding: var(--space-md);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: var(--radius-lg);
+          background: rgba(255,255,255,0.03);
+        }
+        .customer-parcel-panel p {
+          margin: 0;
+        }
         .customer-scan-guide {
           display: flex;
           flex-direction: column;
@@ -464,6 +687,22 @@ export default function ScanQr() {
           }
           .customer-scan-actions .btn {
             width: 100%;
+          }
+          .customer-parcel-panel {
+            align-items: stretch;
+            flex-direction: column;
+          }
+          .customer-parcel-panel button {
+            width: 100%;
+            justify-content: center;
+          }
+          .customer-parcel-panel {
+            align-items: stretch;
+            flex-direction: column;
+          }
+          .customer-parcel-panel button {
+            width: 100%;
+            justify-content: center;
           }
         }
       `}</style>
