@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { HiOutlineMinus, HiOutlinePlus, HiOutlineShoppingCart, HiOutlineTrash, HiOutlineX } from 'react-icons/hi';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
@@ -49,12 +50,19 @@ const getStatusStyle = (status) => {
 };
 
 export default function Bookings() {
+  const navigate = useNavigate();
   const { isAuthenticated, user, preferredLang } = useAuthStore();
   const t = getCustomerText(user?.preferredLang || preferredLang);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancellingId, setCancellingId] = useState(null);
+  const [orderBooking, setOrderBooking] = useState(null);
+  const [menu, setMenu] = useState([]);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const [cart, setCart] = useState([]);
+  const [orderSearch, setOrderSearch] = useState('');
+  const [submittingOrder, setSubmittingOrder] = useState(false);
 
   const loadBookings = async () => {
     if (!isAuthenticated) {
@@ -99,6 +107,69 @@ export default function Bookings() {
       toast.error(t('copyFailed'));
     }
   };
+
+  const openRoomOrder = async (booking) => {
+    setOrderBooking(booking);
+    setCart([]);
+    setOrderSearch('');
+    if (menu.length > 0) return;
+
+    setMenuLoading(true);
+    try {
+      const { data } = await api.get('/menu', { params: { available: 'true' } });
+      setMenu((data.items || []).filter((item) => item.isAvailable !== false && item.isDeleted !== true));
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to load menu');
+    } finally {
+      setMenuLoading(false);
+    }
+  };
+
+  const addToCart = (item) => {
+    setCart((prev) => {
+      const existing = prev.find((cartItem) => cartItem.menuItem._id === item._id);
+      if (existing) {
+        return prev.map((cartItem) => cartItem.menuItem._id === item._id
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem);
+      }
+      return [...prev, { menuItem: item, quantity: 1, notes: '', price: item.price }];
+    });
+  };
+
+  const changeQty = (itemId, delta) => {
+    setCart((prev) => prev
+      .map((item) => item.menuItem._id === itemId ? { ...item, quantity: item.quantity + delta } : item)
+      .filter((item) => item.quantity > 0));
+  };
+
+  const submitRoomOrder = async () => {
+    if (!orderBooking?.room?._id) return toast.error('Room is missing for this booking');
+    if (cart.length === 0) return toast.error('Add at least one food item');
+
+    setSubmittingOrder(true);
+    try {
+      await api.post('/orders', {
+        roomId: orderBooking.room._id,
+        bookingId: orderBooking._id,
+        items: cart.map((item) => ({
+          menuItemId: item.menuItem._id,
+          quantity: item.quantity,
+          notes: item.notes,
+        })),
+      });
+      toast.success('Room service order sent to kitchen');
+      setOrderBooking(null);
+      setCart([]);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to place room order');
+    } finally {
+      setSubmittingOrder(false);
+    }
+  };
+
+  const filteredMenu = menu.filter((item) => (item.name || '').toLowerCase().includes(orderSearch.toLowerCase()));
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (!isAuthenticated) {
     return (
@@ -238,9 +309,114 @@ export default function Bookings() {
                     {cancellingId === booking._id ? t('cancelling') : t('cancelBooking')}
                   </button>
                 )}
+                {booking.type === 'room' && ['confirmed', 'checked_in'].includes(booking.status) && (
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => navigate(`/customer/room-order/${booking._id}`)}
+                    style={{ marginLeft: 'var(--space-sm)', ...goldButton, padding: '0.48rem 1rem' }}
+                  >
+                    <HiOutlineShoppingCart /> Order Food
+                  </button>
+                )}
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {orderBooking && (
+        <div className="modal-overlay" onClick={() => setOrderBooking(null)}>
+          <div
+            className="modal modal-lg"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 920, maxHeight: '88vh', overflowY: 'auto', background: '#101a1d', color: '#f4f5ef' }}
+          >
+            <div className="modal-header">
+              <div>
+                <h2>Room {orderBooking.room?.roomNumber || '-'} Food Order</h2>
+                <p className="text-sm" style={{ color: '#9aa6a0', marginTop: 4 }}>Choose from all currently available food items.</p>
+              </div>
+              <button className="btn btn-ghost btn-icon" onClick={() => setOrderBooking(null)}><HiOutlineX /></button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: 'var(--space-lg)' }}>
+              <div>
+                <input
+                  className="input"
+                  placeholder="Search food..."
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  style={{ ...inputDark, marginBottom: 'var(--space-md)' }}
+                />
+
+                {menuLoading ? (
+                  <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" /></div>
+                ) : filteredMenu.length === 0 ? (
+                  <div className="card" style={{ background: 'rgba(255,255,255,0.03)', color: '#9aa6a0', textAlign: 'center' }}>No food items available</div>
+                ) : (
+                  <div className="grid grid-2 gap-md">
+                    {filteredMenu.map((item) => (
+                      <button
+                        key={item._id}
+                        className="card card-hover"
+                        onClick={() => addToCart(item)}
+                        style={{ textAlign: 'left', background: 'rgba(255,255,255,0.035)', borderColor: 'rgba(255,255,255,0.1)', color: '#f4f5ef' }}
+                      >
+                        {item.image && <img src={item.image} alt={item.name} style={{ width: '100%', height: 110, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />}
+                        <div className="font-bold">{item.name}</div>
+                        <div className="flex items-center justify-between" style={{ marginTop: 8 }}>
+                          <span style={{ color: '#e9bf47', fontWeight: 800 }}>₹{item.price}</span>
+                          <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>{item.category}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <aside className="card" style={{ background: 'rgba(255,255,255,0.035)', borderColor: 'rgba(255,255,255,0.1)', alignSelf: 'start' }}>
+                <h3 className="font-bold mb-md" style={{ color: '#f4f5ef' }}>Order Cart</h3>
+                {cart.length === 0 ? (
+                  <p className="text-sm" style={{ color: '#9aa6a0' }}>Add food items from the menu.</p>
+                ) : (
+                  <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+                    {cart.map((item) => (
+                      <div key={item.menuItem._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 'var(--space-sm)' }}>
+                        <div className="flex items-center justify-between gap-sm">
+                          <strong>{item.menuItem.name}</strong>
+                          <button className="btn btn-ghost btn-icon" style={{ color: '#f0b2b2' }} onClick={() => setCart((prev) => prev.filter((cartItem) => cartItem.menuItem._id !== item.menuItem._id))}>
+                            <HiOutlineTrash />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between" style={{ marginTop: 6 }}>
+                          <div className="flex items-center gap-sm">
+                            <button className="btn btn-ghost btn-icon" onClick={() => changeQty(item.menuItem._id, -1)}><HiOutlineMinus /></button>
+                            <strong>{item.quantity}</strong>
+                            <button className="btn btn-ghost btn-icon" onClick={() => changeQty(item.menuItem._id, 1)}><HiOutlinePlus /></button>
+                          </div>
+                          <span>₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                        </div>
+                        <input
+                          className="input"
+                          placeholder="Note"
+                          value={item.notes}
+                          onChange={(e) => setCart((prev) => prev.map((cartItem) => cartItem.menuItem._id === item.menuItem._id ? { ...cartItem, notes: e.target.value } : cartItem))}
+                          style={{ ...inputDark, marginTop: 8, padding: '0.45rem 0.65rem' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between" style={{ marginTop: 'var(--space-lg)', paddingTop: 'var(--space-md)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="font-bold">Total</span>
+                  <span className="font-bold" style={{ color: '#e9bf47' }}>₹{cartTotal.toLocaleString('en-IN')}</span>
+                </div>
+                <button className="btn btn-primary w-full" onClick={submitRoomOrder} disabled={submittingOrder || cart.length === 0} style={{ marginTop: 'var(--space-md)', ...goldButton, width: '100%' }}>
+                  {submittingOrder ? 'Sending...' : 'Send to Kitchen'}
+                </button>
+              </aside>
+            </div>
+          </div>
         </div>
       )}
     </div>

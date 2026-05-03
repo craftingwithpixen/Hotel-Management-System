@@ -95,6 +95,12 @@ const helpMatchesOrder = (req, order) => (
   refId(req.order) === order._id || refId(req.table) === refId(order.table)
 );
 
+const getOrderSource = (order, t) => (
+  order.room?.roomNumber
+    ? { label: `Room ${order.room.roomNumber}`, isRoom: true }
+    : { label: `${t('table')} ${order.table?.tableNumber || '-'}`, isRoom: false }
+);
+
 export default function Orders() {
   const { isAuthenticated, user, preferredLang } = useAuthStore();
   const t = getCustomerText(user?.preferredLang || preferredLang);
@@ -303,6 +309,7 @@ export default function Orders() {
               const orderStatus = getOrderStatus(order);
               const orderTotal = getOrderTotal(order);
               const visibleItems = order.items?.slice(0, 3) || [];
+              const orderSource = getOrderSource(order, t);
 
               return (
                 <div
@@ -321,7 +328,7 @@ export default function Orders() {
                       </h3>
                       <div className="flex items-center gap-sm flex-wrap text-sm" style={{ color: '#9aa6a0' }}>
                         <span className="flex items-center gap-xs">
-                          <HiOutlineTable /> {t('table')} {order.table?.tableNumber || '-'}
+                          <HiOutlineTable /> {orderSource.label}
                         </span>
                         <span className="flex items-center gap-xs">
                           <HiOutlineClock /> {formatDateTime(order.createdAt)}
@@ -381,6 +388,7 @@ export default function Orders() {
                       onClick={() => activeHelp ? resolveHelp(order) : requestHelp(order)}
                       disabled={
                         helpLoadingByOrder[order._id] ||
+                        orderSource.isRoom ||
                         (!activeHelp && (
                           !ACTIVE_ORDER_STATUSES.has(orderStatus) ||
                           order.table?.status === 'available'
@@ -393,6 +401,8 @@ export default function Orders() {
                         ? activeHelp ? t('closing') : t('sending')
                         : activeHelp
                           ? t('closeHelpRequest')
+                          : orderSource.isRoom
+                            ? 'Room service'
                           : order.table?.status === 'available'
                             ? t('tableFree')
                             : t('needHelp')}

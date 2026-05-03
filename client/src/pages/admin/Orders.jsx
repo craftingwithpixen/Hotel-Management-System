@@ -20,6 +20,11 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuthStore();
   const canSendKOT = ['admin', 'waiter'].includes(user?.role);
+  const getOrderSource = (order) => (
+    order.room?.roomNumber
+      ? `Room ${order.room.roomNumber}`
+      : order.table?.tableNumber || '—'
+  );
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -74,7 +79,7 @@ export default function Orders() {
   return (
     <div className="animate-fade">
       <div className="page-header">
-        <div><h1>Orders</h1><p className="text-muted">Kitchen & table orders</p></div>
+        <div><h1>Orders</h1><p className="text-muted">Kitchen, table, and room orders</p></div>
       </div>
 
       <div className="tabs mb-lg">
@@ -102,7 +107,7 @@ export default function Orders() {
                 <div className="flex items-center gap-sm">
                   <HiOutlineViewGrid style={{ fontSize: '1.5rem' }} />
                   <div>
-                    <div className="font-bold text-lg">{order.table?.tableNumber || '—'}</div>
+                    <div className="font-bold text-lg">{getOrderSource(order)}</div>
                     <div className="text-xs text-muted">by {order.waiter?.name || '—'} · {timeAgo(order.createdAt)}</div>
                     <button
                       className="btn btn-ghost btn-sm"

@@ -59,6 +59,11 @@ export default function KitchenBoard() {
   };
 
   const byStatus = (status) => orders.filter(o => o.overallStatus === status);
+  const getOrderSource = (order) => (
+    order.room?.roomNumber
+      ? `Room ${order.room.roomNumber}`
+      : `Table ${order.table?.tableNumber || '-'}`
+  );
 
   const timeSince = (date) => {
     const mins = Math.floor((Date.now() - new Date(date)) / 60000);
@@ -114,12 +119,12 @@ export default function KitchenBoard() {
                   <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-md)' }}>
                     <div>
                       <div className="font-bold" style={{ fontSize: '1rem' }}>
-                        Table {order.table?.tableNumber || '—'}
+                        {getOrderSource(order)}
                       </div>
                       <div className="text-xs text-muted" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <HiOutlineClock style={{ fontSize: '0.75rem' }} />
                         {timeSince(order.createdAt)}
-                        {order.waiter && ` · ${order.waiter.name}`}
+                        {order.waiter ? ` · ${order.waiter.name}` : order.room ? ' · Room service' : ''}
                       </div>
                     </div>
                     <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
