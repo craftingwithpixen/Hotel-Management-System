@@ -9,6 +9,7 @@ import {
   HiOutlineMenu,
   HiOutlineX,
   HiOutlineCamera,
+  HiOutlineSparkles,
 } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
@@ -105,6 +106,9 @@ export default function CustomerLayout() {
           </NavLink>
           <NavLink to="/customer/orders" className={navClass} onClick={closeMenu}>
             <HiOutlineShoppingBag /> {t('orders')}
+          </NavLink>
+          <NavLink to="/customer/direct-order" className={navClass} onClick={closeMenu}>
+            <HiOutlineSparkles /> Order Directly
           </NavLink>
           <NavLink to="/customer/scan" className={navClass} onClick={closeMenu}>
             <HiOutlineCamera /> {t('scanQr')}

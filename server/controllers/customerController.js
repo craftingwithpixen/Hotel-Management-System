@@ -6,6 +6,7 @@ const LoyaltyTransaction = require("../models/LoyaltyTransaction");
 const Feedback = require("../models/Feedback");
 const Complaint = require("../models/Complaint");
 const Table = require("../models/Table");
+const Hotel = require("../models/Hotel");
 const MenuItem = require("../models/MenuItem");
 
 exports.profile = async (req, res, next) => {
@@ -83,6 +84,42 @@ exports.scanTable = async (req, res, next) => {
     if (!table) return res.status(404).json({ message: "Table not found" });
     const menu = await MenuItem.find({ hotel: table.hotel._id, isDeleted: false, isAvailable: true });
     res.json({ table, menu });
+  } catch (error) { next(error); }
+};
+
+exports.directOrderOptions = async (req, res, next) => {
+  try {
+    const tables = await Table.find({
+      isActive: true,
+      status: "available",
+    }).populate("hotel", "name").sort({ tableNumber: 1 });
+
+    res.json({ tables });
+  } catch (error) { next(error); }
+};
+
+exports.directOrderContext = async (req, res, next) => {
+  try {
+    const { mode, tableId } = req.params;
+    if (mode === "table") {
+      const table = await Table.findOne({
+        _id: tableId,
+        isActive: true,
+        status: "available",
+      }).populate("hotel", "name");
+      if (!table) return res.status(404).json({ message: "Available table not found" });
+      const menu = await MenuItem.find({ hotel: table.hotel._id, isDeleted: false, isAvailable: true });
+      return res.json({ mode: "table", table, menu });
+    }
+
+    if (mode === "parcel") {
+      const hotel = await Hotel.findOne().select("_id name");
+      if (!hotel) return res.status(404).json({ message: "Hotel not found" });
+      const menu = await MenuItem.find({ hotel: hotel._id, isDeleted: false, isAvailable: true });
+      return res.json({ mode: "parcel", hotel, menu });
+    }
+
+    return res.status(400).json({ message: "Invalid direct order mode" });
   } catch (error) { next(error); }
 };
 

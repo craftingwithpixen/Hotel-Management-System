@@ -5,7 +5,10 @@ const authorize = require("../../middleware/authorize");
 
 router.get("/", authenticate, authorize("admin", "manager", "chef"), ctrl.list);
 router.get("/alerts", authenticate, authorize("admin", "manager"), ctrl.alerts);
+router.get("/requests", authenticate, authorize("admin", "manager"), ctrl.listRequests);
+router.post("/requests", authenticate, authorize("chef"), ctrl.createRequest);
 router.post("/consume-today", authenticate, authorize("admin", "manager", "chef"), ctrl.consumeToday);
+router.patch("/requests/:id", authenticate, authorize("admin", "manager"), ctrl.updateRequest);
 router.get("/:id", authenticate, authorize("admin", "manager", "chef"), ctrl.getById);
 router.post("/", authenticate, authorize("admin", "manager"), ctrl.create);
 router.put("/:id", authenticate, authorize("admin", "manager"), ctrl.update);

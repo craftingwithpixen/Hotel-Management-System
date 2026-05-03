@@ -54,6 +54,7 @@ import BookRoom        from './pages/customer/BookRoom';
 import BookTable       from './pages/customer/BookTable';
 import ScanTable       from './pages/customer/ScanTable';
 import ScanQr          from './pages/customer/ScanQr';
+import DirectOrder     from './pages/customer/DirectOrder';
 import Landing         from './pages/public/Landing';
 
 // ────────────────────────────────────────────────────────────────────
@@ -197,9 +198,12 @@ function App() {
           <Route path="scan"       element={<ScanQr />} />
           <Route path="loyalty"    element={<Loyalty />} />
           <Route path="profile"    element={<Profile />} />
+          <Route path="direct-order" element={<DirectOrder />} />
           <Route path="book-room"  element={<BookRoom />} />
           <Route path="book-table" element={<BookTable />} />
           <Route path="room-order/:bookingId" element={<ScanTable />} />
+          <Route path="direct-order/parcel" element={<ScanTable />} />
+          <Route path="direct-order/:directMode/:tableId" element={<ScanTable />} />
         </Route>
 
         {/* ── Public landing ───────────────────────────────────── */}

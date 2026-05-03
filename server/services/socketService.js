@@ -18,7 +18,9 @@ const notifyRoles = async (roles, { type, message, payload }) => {
 };
 
 const emitNewOrder = (io, order) => {
-  const sourceLabel = order.table?.tableNumber
+  const sourceLabel = order.orderType === "parcel"
+    ? "Parcel"
+    : order.table?.tableNumber
     ? `Table ${order.table.tableNumber}`
     : `Room ${order.room?.roomNumber || "Unknown"}`;
 
@@ -26,7 +28,7 @@ const emitNewOrder = (io, order) => {
     orderId: order._id,
     tableNumber: order.table?.tableNumber,
     roomNumber: order.room?.roomNumber,
-    sourceType: order.room ? "room" : "table",
+    sourceType: order.orderType || (order.room ? "room" : "table"),
     items: order.items,
     waiterName: order.waiter?.name,
   });
@@ -34,7 +36,7 @@ const emitNewOrder = (io, order) => {
   io.to("waiter").emit("new:room-service-order", {
     orderId: order._id,
     roomNumber: order.room?.roomNumber,
-    sourceType: order.room ? "room" : "table",
+    sourceType: order.orderType || (order.room ? "room" : "table"),
     items: order.items,
     createdAt: order.createdAt,
   });

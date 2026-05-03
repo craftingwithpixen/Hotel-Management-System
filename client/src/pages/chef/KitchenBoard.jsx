@@ -60,7 +60,9 @@ export default function KitchenBoard() {
 
   const byStatus = (status) => orders.filter(o => o.overallStatus === status);
   const getOrderSource = (order) => (
-    order.room?.roomNumber
+    order.orderType === 'parcel'
+      ? 'Parcel'
+      : order.room?.roomNumber
       ? `Room ${order.room.roomNumber}`
       : `Table ${order.table?.tableNumber || '-'}`
   );

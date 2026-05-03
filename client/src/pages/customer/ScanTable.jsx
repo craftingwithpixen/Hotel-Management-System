@@ -26,12 +26,14 @@ const goldButton = {
 };
 
 export default function ScanTable() {
-  const { tableId, bookingId } = useParams();
+  const { tableId, bookingId, directMode } = useParams();
   const isRoomOrder = Boolean(bookingId);
+  const isDirectOrder = Boolean(directMode);
   const { isAuthenticated, user, preferredLang } = useAuthStore();
   const t = getCustomerText(user?.preferredLang || preferredLang);
   const [tableData, setTableData] = useState(null);
   const [roomData, setRoomData] = useState(null);
+  const [hotelData, setHotelData] = useState(null);
   const [bookingData, setBookingData] = useState(null);
   const [menu, setMenu] = useState([]);
   const [cart, setCart] = useState([]);
@@ -41,7 +43,9 @@ export default function ScanTable() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const url = isRoomOrder
+    const url = isDirectOrder
+      ? `/customer/direct-order/${directMode}${directMode === 'table' ? `/${tableId}` : ''}`
+      : isRoomOrder
       ? `/customer/room-service/${bookingId}`
       : `/customer/scan/table/${tableId}`;
 
@@ -49,12 +53,19 @@ export default function ScanTable() {
       .then(({ data }) => {
         setTableData(data.table || null);
         setRoomData(data.room || null);
+        setHotelData(data.hotel || data.table?.hotel || data.room?.hotel || null);
         setBookingData(data.booking || null);
         setMenu(data.menu || []);
       })
-      .catch(() => toast.error(isRoomOrder ? 'Room service is not available for this booking' : t('invalidTableQr')))
+      .catch(() => toast.error(
+        isRoomOrder
+          ? 'Room service is not available for this booking'
+          : isDirectOrder
+            ? 'Direct ordering is not available right now'
+            : t('invalidTableQr')
+      ))
       .finally(() => setLoading(false));
-  }, [tableId, bookingId, isRoomOrder]);
+  }, [tableId, bookingId, directMode, isDirectOrder, isRoomOrder]);
 
   const categories = ['all', ...new Set(menu.map(i => i.category))];
   const filtered = menu.filter(i => category === 'all' || i.category === category);
@@ -80,7 +91,7 @@ export default function ScanTable() {
         roomId: isRoomOrder ? roomData?._id : undefined,
         bookingId: isRoomOrder ? bookingData?._id : undefined,
         items: cart.map(c => ({ menuItemId: c.menuItem._id, quantity: c.quantity, notes: c.notes })),
-        isQROrder: !isRoomOrder,
+        isQROrder: !isRoomOrder && !isDirectOrder,
         customerId: user?._id,
       });
       setSubmitted(true);
@@ -165,13 +176,15 @@ export default function ScanTable() {
         >
           <div className="scan-table-hero-content" style={{ padding: '1.75rem' }}>
             <p className="scan-table-eyebrow" style={{ fontSize: '0.7rem', letterSpacing: '0.24em', color: '#d8c69b', marginBottom: 8 }}>
-              {isRoomOrder ? 'ROOM SERVICE' : t('scanAndOrder')}
+              {isRoomOrder ? 'ROOM SERVICE' : isDirectOrder ? 'DIRECT ORDER' : t('scanAndOrder')}
             </p>
             <h1 className="font-bold" style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', lineHeight: 1.15, marginBottom: 8 }}>
-              {isRoomOrder ? (roomData?.hotel?.name || 'Grand Paradise') : (tableData?.hotel?.name || 'Grand Paradise')}
+              {isRoomOrder ? (roomData?.hotel?.name || 'Grand Paradise') : (hotelData?.name || tableData?.hotel?.name || 'Grand Paradise')}
             </h1>
             <p style={{ color: '#c5cdc8' }}>
-              {isRoomOrder ? `Room ${roomData?.roomNumber || '-'} · ${t('scanOrderIntro')}` : `${t('table')} ${tableData?.tableNumber} · ${t('scanOrderIntro')}`}
+              {isRoomOrder
+                ? `Room ${roomData?.roomNumber || '-'} · ${t('scanOrderIntro')}`
+                : `${t('table')} ${tableData?.tableNumber} · ${t('scanOrderIntro')}`}
             </p>
           </div>
         </div>

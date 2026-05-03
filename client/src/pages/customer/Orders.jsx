@@ -96,9 +96,11 @@ const helpMatchesOrder = (req, order) => (
 );
 
 const getOrderSource = (order, t) => (
-  order.room?.roomNumber
-    ? { label: `Room ${order.room.roomNumber}`, isRoom: true }
-    : { label: `${t('table')} ${order.table?.tableNumber || '-'}`, isRoom: false }
+  order.orderType === 'parcel'
+    ? { label: 'Parcel', isRoom: false, isParcel: true }
+    : order.room?.roomNumber
+      ? { label: `Room ${order.room.roomNumber}`, isRoom: true, isParcel: false }
+      : { label: `${t('table')} ${order.table?.tableNumber || '-'}`, isRoom: false, isParcel: false }
 );
 
 export default function Orders() {
@@ -389,6 +391,7 @@ export default function Orders() {
                       disabled={
                         helpLoadingByOrder[order._id] ||
                         orderSource.isRoom ||
+                        orderSource.isParcel ||
                         (!activeHelp && (
                           !ACTIVE_ORDER_STATUSES.has(orderStatus) ||
                           order.table?.status === 'available'
@@ -403,6 +406,8 @@ export default function Orders() {
                           ? t('closeHelpRequest')
                           : orderSource.isRoom
                             ? 'Room service'
+                            : orderSource.isParcel
+                              ? 'Parcel order'
                           : order.table?.status === 'available'
                             ? t('tableFree')
                             : t('needHelp')}
