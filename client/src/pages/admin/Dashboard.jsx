@@ -12,6 +12,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [recentBookings, setRecentBookings] = useState([]);
   const [monthlyChartData, setMonthlyChartData] = useState([]);
+  const [weeklyChartData, setWeeklyChartData] = useState([]);
+  const [chartView, setChartView] = useState('monthly');
   const [occupancySlices, setOccupancySlices] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
 
@@ -23,10 +25,11 @@ export default function Dashboard() {
         const month = now.getMonth() + 1;
         const year = now.getFullYear();
 
-        const [dailyRes, occupancyRes, monthlyRes, bookingsRes, alertsRes] = await Promise.all([
+        const [dailyRes, occupancyRes, monthlyRes, weeklyRes, bookingsRes, alertsRes] = await Promise.all([
           api.get(`/reports/daily?date=${todayStr}`).catch(() => ({ data: {} })),
           api.get('/reports/occupancy').catch(() => ({ data: {} })),
           api.get(`/reports/monthly?month=${month}&year=${year}`).catch(() => ({ data: { data: [] } })),
+          api.get('/reports/weekly').catch(() => ({ data: { data: [] } })),
           api.get('/bookings?limit=5').catch(() => ({ data: { bookings: [] } })),
           api.get('/inventory/alerts').catch(() => ({ data: { items: [] } })),
         ]);
@@ -34,6 +37,7 @@ export default function Dashboard() {
         const daily = dailyRes.data || {};
         const occ = occupancyRes.data || {};
         const monthlyRows = monthlyRes.data?.data || [];
+        const weeklyRows = weeklyRes.data?.data || [];
 
         const totalRooms = occ.totalRooms || 0;
         const bookedRooms = occ.bookedRooms || 0;
@@ -49,6 +53,13 @@ export default function Dashboard() {
 
         setMonthlyChartData(
           monthlyRows.map((r) => ({
+            day: r._id,
+            revenue: r.total,
+          }))
+        );
+
+        setWeeklyChartData(
+          weeklyRows.map((r) => ({
             day: r._id,
             revenue: r.total,
           }))
@@ -73,11 +84,16 @@ export default function Dashboard() {
     { label: 'Room Occupancy', value: `${stats.occupancy}%`, icon: HiOutlineOfficeBuilding, color: 'blue', change: '+5.1%' },
   ];
 
+  const chartData = chartView === 'weekly' ? weeklyChartData : monthlyChartData;
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload?.length) {
+      const label = chartView === 'weekly'
+        ? payload[0].payload.day
+        : `Day ${payload[0].payload.day}`;
       return (
         <div className="card" style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: '0.8125rem' }}>
-          <div className="text-muted">Day {payload[0].payload.day}</div>
+          <div className="text-muted">{label}</div>
           <div className="font-bold">₹{payload[0].value.toLocaleString('en-IN')}</div>
         </div>
       );
@@ -123,15 +139,25 @@ export default function Dashboard() {
           <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-lg)' }}>
             <div>
               <h3 className="font-bold text-lg">Revenue Overview</h3>
-              <p className="text-sm text-muted">Last 30 days</p>
+              <p className="text-sm text-muted">{chartView === 'weekly' ? 'Last 7 days' : 'Last 30 days'}</p>
             </div>
             <div className="tabs">
-              <button className="tab active">Monthly</button>
-              <button className="tab">Weekly</button>
+              <button
+                className={`tab ${chartView === 'monthly' ? 'active' : ''}`}
+                onClick={() => setChartView('monthly')}
+              >
+                Monthly
+              </button>
+              <button
+                className={`tab ${chartView === 'weekly' ? 'active' : ''}`}
+                onClick={() => setChartView('weekly')}
+              >
+                Weekly
+              </button>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={monthlyChartData}>
+            <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />

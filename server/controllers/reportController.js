@@ -41,6 +41,44 @@ exports.monthly = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+exports.weekly = async (req, res, next) => {
+  try {
+    // Build the last 7 day buckets (UTC) ending today.
+    const today = new Date();
+    const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    start.setUTCDate(start.getUTCDate() - 6);
+    const end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 23, 59, 59, 999));
+
+    const rows = await Billing.aggregate([
+      { $match: { createdAt: { $gte: start, $lte: end }, status: "paid" } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          total: { $sum: "$total" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalByDay = new Map(rows.map((r) => [r._id, r.total]));
+    const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    const data = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(start);
+      day.setUTCDate(start.getUTCDate() + i);
+      const key = day.toISOString().slice(0, 10);
+      data.push({
+        _id: weekdayNames[day.getUTCDay()],
+        date: key,
+        total: totalByDay.get(key) || 0,
+      });
+    }
+
+    res.json({ data });
+  } catch (error) { next(error); }
+};
+
 exports.occupancy = async (req, res, next) => {
   try {
     const totalRooms = await Room.countDocuments({ isDeleted: false });
