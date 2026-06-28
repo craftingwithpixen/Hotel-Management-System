@@ -75,7 +75,7 @@ export default function ManagerDashboard() {
       </div>
 
       {/* Room availability breakdown */}
-      <div className="grid grid-2 gap-lg mb-lg">
+      <div className="grid grid-2 gap-lg mb-lg" style={{ marginTop: 'var(--space-xl)' }}>
         <div className="card">
           <h3 className="font-bold mb-lg">Room Status</h3>
           {[
