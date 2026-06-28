@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HiOutlineCurrencyRupee, HiOutlineCalendar, HiOutlineShoppingCart, HiOutlineUsers, HiOutlineOfficeBuilding, HiOutlineTrendingUp, HiOutlineExclamation, HiOutlineClipboardList, HiOutlineKey } from 'react-icons/hi';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../../services/api';
@@ -6,6 +7,7 @@ import api from '../../services/api';
 const COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#8b5cf6'];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     revenue: 0, bookings: 0, orders: 0, occupancy: 0,
   });
@@ -256,12 +258,17 @@ export default function Dashboard() {
           <h3 className="font-bold text-lg" style={{ marginBottom: 'var(--space-lg)' }}>Quick Actions</h3>
           <div className="grid grid-2 gap-md" style={{ marginBottom: 'var(--space-xl)' }}>
             {[
-              { label: 'New Booking', icon: HiOutlineClipboardList, color: 'var(--primary)' },
-              { label: 'Add Order', icon: HiOutlineShoppingCart, color: 'var(--accent)' },
-              { label: 'Check In', icon: HiOutlineKey, color: 'var(--success)' },
-              { label: 'Generate Bill', icon: HiOutlineCurrencyRupee, color: 'var(--info)' },
+              { label: 'New Booking', icon: HiOutlineClipboardList, color: 'var(--primary)', to: '/admin/bookings' },
+              { label: 'Add Order', icon: HiOutlineShoppingCart, color: 'var(--accent)', to: '/admin/orders' },
+              { label: 'Check In', icon: HiOutlineKey, color: 'var(--success)', to: '/admin/bookings' },
+              { label: 'Generate Bill', icon: HiOutlineCurrencyRupee, color: 'var(--info)', to: '/admin/billing' },
             ].map((action) => (
-              <button key={action.label} className="card card-hover" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-md)', border: '1px dashed var(--border)' }}>
+              <button
+                key={action.label}
+                onClick={() => navigate(action.to)}
+                className="card card-hover"
+                style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-md)', border: '1px dashed var(--border)' }}
+              >
                 <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)', color: action.color }}><action.icon /></div>
                 <div className="text-sm font-medium">{action.label}</div>
               </button>
@@ -276,13 +283,14 @@ export default function Dashboard() {
               <div style={{ textAlign: 'center', padding: 12, color: 'var(--text-muted)' }}>No low-stock alerts</div>
             ) : (
               lowStockItems.slice(0, 3).map((item) => (
-                <div
+                <button
                   key={item._id}
+                  onClick={() => navigate('/admin/inventory')}
                   className="badge badge-warning"
-                  style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem', width: '100%', justifyContent: 'flex-start' }}
+                  style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem', width: '100%', justifyContent: 'flex-start', cursor: 'pointer', border: 'none' }}
                 >
                   Low stock: {item.name} ({item.currentStock} {item.unit})
-                </div>
+                </button>
               ))
             )}
           </div>
