@@ -3,6 +3,7 @@ import { HiOutlinePlus, HiOutlineTrash, HiOutlineQrcode, HiOutlineViewGrid, HiOu
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import QRDisplay from '../../components/QRDisplay';
+import useAuthStore from '../../store/authStore';
 
 const statusStyles = {
   available: { bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.3)', color: '#10b981', label: 'Available' },
@@ -11,12 +12,15 @@ const statusStyles = {
 };
 
 export default function Tables() {
+  const { user } = useAuthStore();
+  const canUpdateTableStatus = ['admin', 'manager'].includes(user?.role);
   const [loading, setLoading] = useState(true);
   const [tables, setTables] = useState([]);
   const [hotelId, setHotelId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ tableNumber: '', capacity: 4, location: 'Indoor' });
   const [qrModalTable, setQrModalTable] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -24,7 +28,7 @@ export default function Tables() {
       const [hotelRes, tablesRes] = await Promise.all([api.get('/hotel'), api.get('/tables')]);
       setHotelId(hotelRes.data?.hotel?._id || null);
       setTables(tablesRes.data?.tables || []);
-    } catch (err) {
+    } catch {
       toast.error('Failed to load tables');
       setTables([]);
     } finally {
@@ -33,8 +37,8 @@ export default function Tables() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreate = async (e) => {
@@ -69,6 +73,21 @@ export default function Tables() {
       fetchAll();
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to delete table');
+    }
+  };
+
+  const handleStatusChange = async (tableId, status) => {
+    if (!canUpdateTableStatus) return;
+    setUpdatingStatusId(tableId);
+    try {
+      await api.put(`/tables/${tableId}/status`, { status });
+      setTables((prev) => prev.map((table) => (table._id === tableId ? { ...table, status } : table)));
+      toast.success('Table status updated');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update table status');
+      fetchAll();
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -125,6 +144,23 @@ export default function Tables() {
                 <div className="text-xs font-semibold" style={{ color: s.color, marginTop: 'var(--space-sm)' }}>
                   {s.label}
                 </div>
+                {canUpdateTableStatus && (
+                  <div className="input-group" style={{ marginTop: 'var(--space-md)', textAlign: 'left' }}>
+                    <label className="text-xs">Change status</label>
+                    <select
+                      className="input"
+                      value={table.status}
+                      disabled={updatingStatusId === table._id}
+                      onChange={(e) => handleStatusChange(table._id, e.target.value)}
+                    >
+                      {Object.entries(statusStyles).map(([value, config]) => (
+                        <option key={value} value={value}>
+                          {config.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="flex gap-xs justify-center" style={{ marginTop: 'var(--space-md)' }}>
                   <button className="btn btn-ghost btn-sm btn-icon" title="Show QR" onClick={() => setQrModalTable(table)}>
                     <HiOutlineQrcode />

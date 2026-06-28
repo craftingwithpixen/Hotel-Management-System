@@ -14,6 +14,7 @@ import {
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
 import { getCustomerText } from '../i18n/customerText';
+import NotificationBell from '../components/NotificationBell';
 
 const asideStyle = {
   width: 260,
@@ -69,7 +70,7 @@ export default function CustomerLayout() {
       <aside className={`customer-dashboard-aside ${menuOpen ? 'is-open' : ''}`} style={asideStyle}>
         <div className="flex items-center justify-between gap-sm" style={{ marginBottom: 'var(--space-lg)' }}>
           <NavLink
-            to="/customer"
+            to="/"
             onClick={closeMenu}
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}
           >
@@ -185,11 +186,21 @@ export default function CustomerLayout() {
           >
             <HiOutlineMenu />
           </button>
-          <span className="font-display font-bold" style={brandGold}>
+          <NavLink
+            to="/"
+            className="font-display font-bold"
+            style={{ ...brandGold, textDecoration: 'none' }}
+          >
             Grand Paradise
-          </span>
-          <span style={{ width: 40 }} />
+          </NavLink>
+          {user ? <NotificationBell /> : <span style={{ width: 40 }} />}
         </header>
+
+        {user && (
+          <div className="customer-desktop-topbar">
+            <NotificationBell />
+          </div>
+        )}
 
         <main style={{ padding: 'var(--space-xl)', maxWidth: 1280, width: '100%', margin: '0 auto', flex: 1, background: 'transparent' }}>
           <Outlet />
@@ -293,6 +304,15 @@ export default function CustomerLayout() {
           position: sticky;
           top: 0;
           z-index: 50;
+        }
+        .customer-desktop-topbar {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          padding: var(--space-md) var(--space-xl) 0;
+        }
+        @media (max-width: 768px) {
+          .customer-desktop-topbar { display: none; }
         }
         .customer-dashboard-backdrop {
           display: none;

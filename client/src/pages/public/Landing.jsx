@@ -275,7 +275,7 @@ export default function Landing() {
               Curated hotel and restaurant picks loved by guests near your location.
             </p>
           </div>
-          <Link to="/customer" style={{ ...goldButton, padding: '0.7rem 1.55rem' }}>View All</Link>
+          <Link to="/listings" style={{ ...goldButton, padding: '0.7rem 1.55rem' }}>View All</Link>
         </div>
         <div className="grid grid-2 gap-lg">
           {featuredListings.map((item) => (

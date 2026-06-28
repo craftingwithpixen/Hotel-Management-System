@@ -84,7 +84,7 @@ export default function Bookings() {
 
   return (
     <div className="animate-fade">
-      <div className="page-header"><div><h1>Bookings</h1><p className="text-muted">Manage all reservations</p></div></div>
+      <div className="page-header"><div><h1>Room Bookings</h1><p className="text-muted">Manage all reservations</p></div></div>
 
       <div className="flex items-center gap-md flex-wrap mb-lg">
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>

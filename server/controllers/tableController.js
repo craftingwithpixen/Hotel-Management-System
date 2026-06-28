@@ -3,6 +3,8 @@ const HelpRequest = require("../models/HelpRequest");
 const { generateTableQR } = require("../services/qrService");
 const { emitTableStatus, emitCustomerHelpResolved } = require("../services/socketService");
 
+const TABLE_STATUSES = ["available", "reserved", "occupied"];
+
 exports.list = async (req, res, next) => {
   try {
     const tables = await Table.find({ isActive: true }).populate("hotel", "name");
@@ -46,10 +48,15 @@ exports.delete = async (req, res, next) => {
 
 exports.updateStatus = async (req, res, next) => {
   try {
-    const table = await Table.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    const { status } = req.body;
+    if (!TABLE_STATUSES.includes(status)) {
+      return res.status(400).json({ message: "Invalid table status" });
+    }
+
+    const table = await Table.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
     if (!table) return res.status(404).json({ message: "Table not found" });
 
-    if (req.body.status === "available") {
+    if (status === "available") {
       const activeHelpRequests = await HelpRequest.find({
         table: table._id,
         status: "active",

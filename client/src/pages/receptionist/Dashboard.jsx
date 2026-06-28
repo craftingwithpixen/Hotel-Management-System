@@ -52,7 +52,7 @@ export default function ReceptionistDashboard() {
       </div>
 
       {/* Upcoming check-ins */}
-      <div className="card">
+      <div className="card" style={{ marginTop: 'var(--space-xl)' }}>
         <h3 className="font-bold" style={{ marginBottom: 'var(--space-lg)' }}>Upcoming Confirmed Bookings</h3>
         {recentBkgs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No confirmed bookings</div>

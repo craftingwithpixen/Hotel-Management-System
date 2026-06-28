@@ -1,12 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   HiOutlineHome, HiOutlineShoppingCart, HiOutlineClipboardList,
-  HiOutlineLogout, HiOutlineMenu, HiOutlineBell, HiOutlineCollection,
+  HiOutlineLogout, HiOutlineMenu, HiOutlineCollection,
   HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCurrencyRupee,
-  HiOutlineKey, HiOutlineUsers, HiOutlineUser,
+  HiOutlineKey, HiOutlineUser,
 } from 'react-icons/hi';
+import NotificationBell from '../components/NotificationBell';
 
 const roleMenus = {
   waiter: [
@@ -28,7 +29,7 @@ const roleMenus = {
   ],
   manager: [
     { path: '/staff/manager', icon: HiOutlineHome, label: 'Dashboard', end: true },
-    { path: '/staff/manager/hotel', icon: HiOutlineOfficeBuilding, label: 'Hotel Settings' },
+    // { path: '/staff/manager/hotel', icon: HiOutlineOfficeBuilding, label: 'Hotel Settings' },
     { path: '/staff/manager/rooms', icon: HiOutlineOfficeBuilding, label: 'Rooms' },
     { path: '/staff/manager/tables', icon: HiOutlineViewGrid, label: 'Tables' },
     { path: '/staff/manager/inventory', icon: HiOutlineCollection, label: 'Inventory' },
@@ -129,9 +130,7 @@ export default function StaffLayout() {
             </div>
           </div>
           <div className="flex items-center gap-md">
-            <button className="btn btn-ghost btn-icon" style={{ position: 'relative' }}>
-              <HiOutlineBell style={{ fontSize: '1.25rem' }} />
-            </button>
+            <NotificationBell />
             <div className="badge" style={{ background: roleColor, color: '#fff', textTransform: 'capitalize' }}>
               {user?.role}
             </div>

@@ -6,7 +6,7 @@ const Hotel = require("../models/Hotel");
 const Billing = require("../models/Billing");
 const Payment = require("../models/Payment");
 const { computeRoomBill } = require("../services/billingCalcService");
-const { emitNewBooking, emitBookingCancelled } = require("../services/socketService");
+const { emitNewBooking, emitBookingCancelled, notifyUser } = require("../services/socketService");
 const { refundPayment } = require("./paymentController");
 const { Types } = require("mongoose");
 
@@ -101,6 +101,13 @@ exports.confirm = async (req, res, next) => {
 
     booking.status = "confirmed";
     await booking.save();
+
+    void notifyUser(req.app.get("io"), booking.customer, {
+      type: "booking:confirmed",
+      message: `Your ${booking.type} booking has been confirmed`,
+      payload: { bookingId: booking._id, bookingType: booking.type, status: "confirmed" },
+    }).catch(() => {});
+
     res.json({ booking });
   } catch (error) { next(error); }
 };
@@ -201,6 +208,16 @@ exports.cancel = async (req, res, next) => {
     if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "available" });
     if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "available" });
     if (req.app.get("io")) emitBookingCancelled(req.app.get("io"), booking);
+
+    // Notify the customer when their booking is cancelled by staff.
+    if (isPrivileged && !isOwner) {
+      void notifyUser(req.app.get("io"), booking.customer, {
+        type: "booking:cancelled",
+        message: `Your ${booking.type} booking was cancelled`,
+        payload: { bookingId: booking._id, bookingType: booking.type, status: "cancelled", reason: booking.cancellationReason },
+      }).catch(() => {});
+    }
+
     res.json({ booking });
   } catch (error) { next(error); }
 };
@@ -222,6 +239,13 @@ exports.reject = async (req, res, next) => {
     if (booking.room) await Room.findByIdAndUpdate(booking.room, { status: "available" });
     if (booking.table) await Table.findByIdAndUpdate(booking.table, { status: "available" });
     if (req.app.get("io")) emitBookingCancelled(req.app.get("io"), booking);
+
+    void notifyUser(req.app.get("io"), booking.customer, {
+      type: "booking:rejected",
+      message: `Your ${booking.type} booking was rejected`,
+      payload: { bookingId: booking._id, bookingType: booking.type, status: "rejected", reason: booking.cancellationReason },
+    }).catch(() => {});
+
     res.json({ booking });
   } catch (error) { next(error); }
 };

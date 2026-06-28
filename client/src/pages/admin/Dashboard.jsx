@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HiOutlineCurrencyRupee, HiOutlineCalendar, HiOutlineShoppingCart, HiOutlineUsers, HiOutlineOfficeBuilding, HiOutlineTrendingUp, HiOutlineExclamation, HiOutlineClipboardList, HiOutlineKey } from 'react-icons/hi';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../../services/api';
@@ -6,12 +7,15 @@ import api from '../../services/api';
 const COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#8b5cf6'];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     revenue: 0, bookings: 0, orders: 0, occupancy: 0,
   });
   const [loading, setLoading] = useState(true);
   const [recentBookings, setRecentBookings] = useState([]);
   const [monthlyChartData, setMonthlyChartData] = useState([]);
+  const [weeklyChartData, setWeeklyChartData] = useState([]);
+  const [chartView, setChartView] = useState('monthly');
   const [occupancySlices, setOccupancySlices] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
 
@@ -23,10 +27,11 @@ export default function Dashboard() {
         const month = now.getMonth() + 1;
         const year = now.getFullYear();
 
-        const [dailyRes, occupancyRes, monthlyRes, bookingsRes, alertsRes] = await Promise.all([
+        const [dailyRes, occupancyRes, monthlyRes, weeklyRes, bookingsRes, alertsRes] = await Promise.all([
           api.get(`/reports/daily?date=${todayStr}`).catch(() => ({ data: {} })),
           api.get('/reports/occupancy').catch(() => ({ data: {} })),
           api.get(`/reports/monthly?month=${month}&year=${year}`).catch(() => ({ data: { data: [] } })),
+          api.get('/reports/weekly').catch(() => ({ data: { data: [] } })),
           api.get('/bookings?limit=5').catch(() => ({ data: { bookings: [] } })),
           api.get('/inventory/alerts').catch(() => ({ data: { items: [] } })),
         ]);
@@ -34,6 +39,7 @@ export default function Dashboard() {
         const daily = dailyRes.data || {};
         const occ = occupancyRes.data || {};
         const monthlyRows = monthlyRes.data?.data || [];
+        const weeklyRows = weeklyRes.data?.data || [];
 
         const totalRooms = occ.totalRooms || 0;
         const bookedRooms = occ.bookedRooms || 0;
@@ -49,6 +55,13 @@ export default function Dashboard() {
 
         setMonthlyChartData(
           monthlyRows.map((r) => ({
+            day: r._id,
+            revenue: r.total,
+          }))
+        );
+
+        setWeeklyChartData(
+          weeklyRows.map((r) => ({
             day: r._id,
             revenue: r.total,
           }))
@@ -73,11 +86,16 @@ export default function Dashboard() {
     { label: 'Room Occupancy', value: `${stats.occupancy}%`, icon: HiOutlineOfficeBuilding, color: 'blue', change: '+5.1%' },
   ];
 
+  const chartData = chartView === 'weekly' ? weeklyChartData : monthlyChartData;
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload?.length) {
+      const label = chartView === 'weekly'
+        ? payload[0].payload.day
+        : `Day ${payload[0].payload.day}`;
       return (
         <div className="card" style={{ padding: 'var(--space-sm) var(--space-md)', fontSize: '0.8125rem' }}>
-          <div className="text-muted">Day {payload[0].payload.day}</div>
+          <div className="text-muted">{label}</div>
           <div className="font-bold">₹{payload[0].value.toLocaleString('en-IN')}</div>
         </div>
       );
@@ -123,15 +141,25 @@ export default function Dashboard() {
           <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-lg)' }}>
             <div>
               <h3 className="font-bold text-lg">Revenue Overview</h3>
-              <p className="text-sm text-muted">Last 30 days</p>
+              <p className="text-sm text-muted">{chartView === 'weekly' ? 'Last 7 days' : 'Last 30 days'}</p>
             </div>
             <div className="tabs">
-              <button className="tab active">Monthly</button>
-              <button className="tab">Weekly</button>
+              <button
+                className={`tab ${chartView === 'monthly' ? 'active' : ''}`}
+                onClick={() => setChartView('monthly')}
+              >
+                Monthly
+              </button>
+              <button
+                className={`tab ${chartView === 'weekly' ? 'active' : ''}`}
+                onClick={() => setChartView('weekly')}
+              >
+                Weekly
+              </button>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={monthlyChartData}>
+            <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -230,12 +258,17 @@ export default function Dashboard() {
           <h3 className="font-bold text-lg" style={{ marginBottom: 'var(--space-lg)' }}>Quick Actions</h3>
           <div className="grid grid-2 gap-md" style={{ marginBottom: 'var(--space-xl)' }}>
             {[
-              { label: 'New Booking', icon: HiOutlineClipboardList, color: 'var(--primary)' },
-              { label: 'Add Order', icon: HiOutlineShoppingCart, color: 'var(--accent)' },
-              { label: 'Check In', icon: HiOutlineKey, color: 'var(--success)' },
-              { label: 'Generate Bill', icon: HiOutlineCurrencyRupee, color: 'var(--info)' },
+              { label: 'New Booking', icon: HiOutlineClipboardList, color: 'var(--primary)', to: '/admin/bookings' },
+              { label: 'Add Order', icon: HiOutlineShoppingCart, color: 'var(--accent)', to: '/admin/orders' },
+              { label: 'Check In', icon: HiOutlineKey, color: 'var(--success)', to: '/admin/bookings' },
+              { label: 'Generate Bill', icon: HiOutlineCurrencyRupee, color: 'var(--info)', to: '/admin/billing' },
             ].map((action) => (
-              <button key={action.label} className="card card-hover" style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-md)', border: '1px dashed var(--border)' }}>
+              <button
+                key={action.label}
+                onClick={() => navigate(action.to)}
+                className="card card-hover"
+                style={{ cursor: 'pointer', textAlign: 'center', padding: 'var(--space-md)', border: '1px dashed var(--border)' }}
+              >
                 <div style={{ fontSize: '1.5rem', marginBottom: 'var(--space-xs)', color: action.color }}><action.icon /></div>
                 <div className="text-sm font-medium">{action.label}</div>
               </button>
@@ -250,13 +283,14 @@ export default function Dashboard() {
               <div style={{ textAlign: 'center', padding: 12, color: 'var(--text-muted)' }}>No low-stock alerts</div>
             ) : (
               lowStockItems.slice(0, 3).map((item) => (
-                <div
+                <button
                   key={item._id}
+                  onClick={() => navigate('/admin/inventory')}
                   className="badge badge-warning"
-                  style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem', width: '100%', justifyContent: 'flex-start' }}
+                  style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem', width: '100%', justifyContent: 'flex-start', cursor: 'pointer', border: 'none' }}
                 >
                   Low stock: {item.name} ({item.currentStock} {item.unit})
-                </div>
+                </button>
               ))
             )}
           </div>

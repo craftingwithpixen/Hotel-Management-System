@@ -12,6 +12,7 @@ import CustomerLayout from './layouts/CustomerLayout';
 import Login     from './pages/auth/Login';
 import Register  from './pages/auth/Register';
 import OTPVerify from './pages/auth/OTPVerify';
+import ForgotPassword from './pages/auth/ForgotPassword';
 
 // Admin Pages
 import Dashboard  from './pages/admin/Dashboard';
@@ -56,6 +57,7 @@ import ScanTable       from './pages/customer/ScanTable';
 import ScanQr          from './pages/customer/ScanQr';
 import DirectOrder     from './pages/customer/DirectOrder';
 import Landing         from './pages/public/Landing';
+import Listings        from './pages/public/Listings';
 
 // ────────────────────────────────────────────────────────────────────
 // Role-based home route helper
@@ -119,6 +121,7 @@ function App() {
         <Route path="/login"       element={<Login />} />
         <Route path="/register"    element={<Register />} />
         <Route path="/verify-otp"  element={<OTPVerify />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* ── QR Scan (public, mobile-friendly) ─────────────── */}
         <Route path="/scan/table/:tableId" element={<ScanTable />} />
@@ -208,6 +211,7 @@ function App() {
 
         {/* ── Public landing ───────────────────────────────────── */}
         <Route path="/" element={<Landing />} />
+        <Route path="/listings" element={<Listings />} />
 
         {/* ── Auth home redirect ──────────────────────────────── */}
         <Route path="/home" element={<AuthHomeRedirect />} />

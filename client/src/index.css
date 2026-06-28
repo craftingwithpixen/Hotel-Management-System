@@ -301,6 +301,12 @@ select.input {
   padding-right: 2.5rem;
 }
 
+/* Keep dropdown options readable (avoid white-on-white in dark inputs) */
+select.input option {
+  background-color: #0c1418;
+  color: #f4f5ef;
+}
+
 /* Badge */
 .badge {
   display: inline-flex;
@@ -402,6 +408,7 @@ select.input {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
+  white-space: nowrap;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle, HiOutlineX, HiOutlineClock, HiOutlineCheckCircle } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlineSearch, HiOutlineExclamationCircle, HiOutlineX, HiOutlineClock, HiOutlineCheckCircle, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
@@ -9,6 +9,8 @@ export default function Inventory() {
   const [hotelId, setHotelId] = useState(null);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [restockItem, setRestockItem] = useState(null);
   const [historyItem, setHistoryItem] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -47,8 +49,8 @@ export default function Inventory() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()));
@@ -63,6 +65,75 @@ export default function Inventory() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const resetForm = () => {
+    setForm({ name: '', category: 'Grains', currentStock: '', unit: 'kg', lowStockThreshold: '' });
+  };
+
+  const openCreate = () => {
+    setEditItem(null);
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openEdit = (item) => {
+    setEditItem(item);
+    setForm({
+      name: item.name || '',
+      category: item.category || 'Grains',
+      currentStock: item.currentStock ?? '',
+      unit: item.unit || 'kg',
+      lowStockThreshold: item.lowStockThreshold ?? '',
+    });
+    setShowModal(true);
+  };
+
+  const submitItem = async (e) => {
+    e.preventDefault();
+    if (!hotelId) return toast.error('Hotel not configured');
+
+    const payload = {
+      hotel: hotelId,
+      name: form.name,
+      category: form.category || undefined,
+      unit: form.unit,
+      currentStock: Number(form.currentStock),
+      lowStockThreshold: Number(form.lowStockThreshold),
+    };
+
+    setIsSubmitting(true);
+    try {
+      if (editItem) {
+        const { data } = await api.put(`/inventory/${editItem._id}`, payload);
+        setItems((prev) => prev.map((item) => item._id === editItem._id ? data.item : item));
+        toast.success('Item updated');
+      } else {
+        const { data } = await api.post('/inventory', payload);
+        setItems((prev) => [...prev, data.item]);
+        toast.success('Item added');
+      }
+      setShowModal(false);
+      setEditItem(null);
+      resetForm();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || `Failed to ${editItem ? 'update' : 'add'} item`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (item) => {
+    const confirmed = window.confirm(`Delete ${item.name} from inventory?`);
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/inventory/${item._id}`);
+      setItems((prev) => prev.filter((current) => current._id !== item._id));
+      toast.success('Item deleted');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to delete item');
+    }
   };
 
   const openRestock = (item) => {
@@ -129,7 +200,7 @@ export default function Inventory() {
           <h1>Inventory</h1>
           <p className="text-muted">Track supplies and stock levels</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={openCreate}>
           <HiOutlinePlus /> Add Item
         </button>
       </div>
@@ -249,13 +320,23 @@ export default function Inventory() {
               <div className="flex gap-sm">
                 <button
                   className="btn btn-outline btn-sm"
-                  style={{ flex: 1 }}
                   onClick={() => openRestock(item)}
                 >
                   Restock
                 </button>
                 <button className="btn btn-ghost btn-sm" onClick={() => openHistory(item)}>
                   History
+                </button>
+                <button className="btn btn-ghost btn-sm btn-icon" title="Edit item" onClick={() => openEdit(item)}>
+                  <HiOutlinePencil />
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm btn-icon"
+                  title="Delete item"
+                  style={{ color: 'var(--danger)' }}
+                  onClick={() => handleDelete(item)}
+                >
+                  <HiOutlineTrash />
                 </button>
               </div>
             </div>
@@ -268,31 +349,10 @@ export default function Inventory() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Add Inventory Item</h2>
+              <h2>{editItem ? 'Edit Inventory Item' : 'Add Inventory Item'}</h2>
               <button className="btn btn-ghost btn-icon" onClick={() => setShowModal(false)}><HiOutlineX /></button>
             </div>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!hotelId) return toast.error('Hotel not configured');
-                try {
-                  await api.post('/inventory', {
-                    hotel: hotelId,
-                    name: form.name,
-                    category: form.category || undefined,
-                    unit: form.unit,
-                    currentStock: Number(form.currentStock),
-                    lowStockThreshold: Number(form.lowStockThreshold),
-                  });
-                  toast.success('Item added');
-                  setShowModal(false);
-                  setForm({ name: '', category: 'Grains', currentStock: '', unit: 'kg', lowStockThreshold: '' });
-                  fetchAll();
-                } catch (err) {
-                  toast.error(err?.response?.data?.message || 'Failed to add item');
-                }
-              }}
-            >
+            <form onSubmit={submitItem}>
               <div className="input-group mb-md">
                 <label>Item Name</label>
                 <input className="input" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
@@ -325,7 +385,9 @@ export default function Inventory() {
               </div>
               <div className="flex gap-md justify-end">
                 <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Add to Inventory</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : editItem ? 'Update Item' : 'Add to Inventory'}
+                </button>
               </div>
             </form>
           </div>

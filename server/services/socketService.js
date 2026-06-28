@@ -2,12 +2,12 @@
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 
-const notifyRoles = async (roles, { type, message, payload }) => {
+const notifyRoles = async (io, roles, { type, message, payload }) => {
   if (!roles?.length) return;
   const recipients = await User.find({ role: { $in: roles }, isDeleted: false }).select("_id");
   if (!recipients?.length) return;
 
-  await Notification.insertMany(
+  const docs = await Notification.insertMany(
     recipients.map((u) => ({
       recipient: u._id,
       type,
@@ -15,6 +15,28 @@ const notifyRoles = async (roles, { type, message, payload }) => {
       payload: payload || {},
     }))
   );
+
+  // Push each notification to the recipient's personal room for live updates.
+  if (io) {
+    docs.forEach((doc) => {
+      io.to(`user:${doc.recipient}`).emit("notification:new", { notification: doc });
+    });
+  }
+};
+
+// Create + deliver a notification to a single user (e.g. a customer).
+const notifyUser = async (io, userId, { type, message, payload }) => {
+  if (!userId) return null;
+
+  const doc = await Notification.create({
+    recipient: userId,
+    type,
+    message: message || "",
+    payload: payload || {},
+  });
+
+  if (io) io.to(`user:${userId}`).emit("notification:new", { notification: doc });
+  return doc;
 };
 
 const emitNewOrder = (io, order) => {
@@ -42,7 +64,7 @@ const emitNewOrder = (io, order) => {
   });
 
   if (order.room) {
-    void notifyRoles(["waiter", "manager", "admin"], {
+    void notifyRoles(io, ["waiter", "manager", "admin"], {
       type: "room:order",
       message: `Room service order — ${sourceLabel}`,
       payload: {
@@ -88,7 +110,7 @@ const emitNewBooking = (io, booking) => {
   });
 
   // Persistent in-app notification
-  void notifyRoles(["receptionist"], {
+  void notifyRoles(io, ["receptionist"], {
     type: "booking:new",
     message: `New ${booking.type} booking — ${booking.customer?.name || "Customer"}`,
     payload: {
@@ -107,7 +129,7 @@ const emitBookingCancelled = (io, booking) => {
     reason: booking.cancellationReason,
   });
 
-  void notifyRoles(["receptionist", "admin"], {
+  void notifyRoles(io, ["receptionist", "admin"], {
     type: "booking:cancelled",
     message: `Booking cancelled — ${booking.customer?.name || "Customer"}`,
     payload: {
@@ -128,7 +150,7 @@ const emitInventoryAlert = (io, items) => {
     })),
   });
 
-  void notifyRoles(["admin", "manager"], {
+  void notifyRoles(io, ["admin", "manager"], {
     type: "inventory:alert",
     message: `Low stock alert (${items.length} item${items.length === 1 ? "" : "s"})`,
     payload: {
@@ -149,7 +171,7 @@ const emitPaymentCaptured = (io, billing) => {
     method: billing.payment?.method,
   });
 
-  void notifyRoles(["admin"], {
+  void notifyRoles(io, ["admin"], {
     type: "payment:captured",
     message: `Payment captured — Invoice ${billing._id}`,
     payload: {
@@ -166,7 +188,7 @@ const emitTableStatus = (io, table) => {
     status: table.status,
   });
 
-  void notifyRoles(["receptionist", "admin"], {
+  void notifyRoles(io, ["receptionist", "admin"], {
     type: "table:status",
     message: `Table status updated — ${table.tableNumber || table._id}`,
     payload: {
@@ -190,7 +212,7 @@ const emitCustomerHelpRequested = (io, helpRequest) => {
 
   io.to("waiter").to("admin").to("receptionist").emit("table:help", payload);
 
-  void notifyRoles(["waiter", "admin", "receptionist"], {
+  void notifyRoles(io, ["waiter", "admin", "receptionist"], {
     type: "table:help",
     message: `Table ${payload.tableNumber || "Unknown"} requested help`,
     payload,
@@ -207,6 +229,7 @@ const emitCustomerHelpResolved = (io, helpRequest) => {
 };
 
 module.exports = {
+  notifyUser,
   emitNewOrder,
   emitOrderUpdate,
   emitItemUpdate,
