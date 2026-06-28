@@ -10,6 +10,7 @@ const typeLabels = {
   'booking:cancelled': 'Booking cancelled',
   'room:order': 'Room service order',
   'order:ready': 'Order ready',
+  'order:ready:waiter': 'Order ready to serve',
   'order:served': 'Order served',
   'inventory:alert': 'Low stock alert',
   'inventory:request': 'Inventory request',

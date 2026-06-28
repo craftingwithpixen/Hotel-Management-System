@@ -143,6 +143,28 @@ exports.updateStatus = async (req, res, next) => {
       }).catch(() => {});
     }
 
+    // Tell the assigned waiter to collect the order once the chef marks it ready.
+    if (order?.waiter && req.body.status === "ready") {
+      const sourceLabel = order.orderType === "parcel"
+        ? "Parcel"
+        : order.table?.tableNumber
+        ? `Table ${order.table.tableNumber}`
+        : order.room?.roomNumber
+        ? `Room ${order.room.roomNumber}`
+        : "Order";
+      void notifyUser(req.app.get("io"), order.waiter._id || order.waiter, {
+        type: "order:ready:waiter",
+        message: `${sourceLabel} order is ready to serve`,
+        payload: {
+          orderId: order._id,
+          orderCode: order.orderCode,
+          status: "ready",
+          tableNumber: order.table?.tableNumber,
+          roomNumber: order.room?.roomNumber,
+        },
+      }).catch(() => {});
+    }
+
     res.json({ order });
   } catch (error) { next(error); }
 };
