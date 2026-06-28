@@ -12,6 +12,7 @@ import CustomerLayout from './layouts/CustomerLayout';
 import Login     from './pages/auth/Login';
 import Register  from './pages/auth/Register';
 import OTPVerify from './pages/auth/OTPVerify';
+import ForgotPassword from './pages/auth/ForgotPassword';
 
 // Admin Pages
 import Dashboard  from './pages/admin/Dashboard';
@@ -119,6 +120,7 @@ function App() {
         <Route path="/login"       element={<Login />} />
         <Route path="/register"    element={<Register />} />
         <Route path="/verify-otp"  element={<OTPVerify />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* ── QR Scan (public, mobile-friendly) ─────────────── */}
         <Route path="/scan/table/:tableId" element={<ScanTable />} />
