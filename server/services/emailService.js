@@ -1,26 +1,35 @@
-// Email service using Resend (graceful fallback when API key not configured)
-let resend = null;
+// Email service using Gmail SMTP via Nodemailer
+// (graceful fallback to console logging when credentials are not configured)
+const nodemailer = require("nodemailer");
 
-try {
-  const { Resend } = require("resend");
-  if (process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.includes("placeholder")) {
-    resend = new Resend(process.env.RESEND_API_KEY);
-  }
-} catch (e) {
-  console.log("Resend not configured, emails will be logged to console");
+let transporter = null;
+
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const FROM_NAME = process.env.EMAIL_FROM_NAME || "Grand Paradise";
+const FROM_EMAIL = process.env.EMAIL_FROM || GMAIL_USER;
+
+if (GMAIL_USER && GMAIL_APP_PASSWORD) {
+  transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: GMAIL_USER,
+      pass: GMAIL_APP_PASSWORD,
+    },
+  });
+} else {
+  console.log("Gmail not configured (GMAIL_USER / GMAIL_APP_PASSWORD missing), emails will be logged to console");
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "noreply@hospitalityos.com";
-
 const sendEmail = async ({ to, subject, html, attachments }) => {
-  if (!resend) {
+  if (!transporter) {
     console.log(`📧 [EMAIL LOG] To: ${to} | Subject: ${subject}`);
     return { success: true, logged: true };
   }
 
   try {
-    const data = await resend.emails.send({
-      from: FROM_EMAIL,
+    const data = await transporter.sendMail({
+      from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to,
       subject,
       html,
