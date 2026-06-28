@@ -167,8 +167,9 @@ exports.createRequest = async (req, res, next) => {
 
     const populated = await request.populate("requestedBy", "name role");
     const recipients = await User.find({ role: { $in: ["admin", "manager"] }, isDeleted: false }).select("_id");
+    const io = req.app.get("io");
     if (recipients.length) {
-      await Notification.insertMany(recipients.map((user) => ({
+      const docs = await Notification.insertMany(recipients.map((user) => ({
         recipient: user._id,
         type: "inventory:request",
         message: `Inventory requested - ${itemName}`,
@@ -180,9 +181,15 @@ exports.createRequest = async (req, res, next) => {
           requestedBy: req.user.name,
         },
       })));
+
+      if (io) {
+        docs.forEach((doc) => {
+          io.to(`user:${doc.recipient}`).emit("notification:new", { notification: doc });
+        });
+      }
     }
 
-    req.app.get("io")?.to("admin").to("manager").emit("inventory:request", {
+    io?.to("admin").to("manager").emit("inventory:request", {
       request: populated,
     });
 

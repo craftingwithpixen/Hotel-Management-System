@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineHome, HiOutlineUsers, HiOutlineClipboardList, HiOutlineCog, HiOutlineLogout, HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCollection, HiOutlineShoppingCart, HiOutlineCurrencyRupee, HiOutlineBell, HiOutlineMenu, HiOutlineKey } from 'react-icons/hi';
+import { HiOutlineHome, HiOutlineUsers, HiOutlineClipboardList, HiOutlineCog, HiOutlineLogout, HiOutlineOfficeBuilding, HiOutlineViewGrid, HiOutlineCollection, HiOutlineShoppingCart, HiOutlineCurrencyRupee, HiOutlineMenu, HiOutlineKey } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import { useState } from 'react';
+import NotificationBell from '../components/NotificationBell';
 
 const menuItems = [
   { path: '/admin', icon: HiOutlineHome, label: 'Dashboard', end: true },
@@ -93,10 +94,7 @@ export default function AdminLayout() {
             </div>
           </div>
           <div className="flex items-center gap-md">
-            <button className="btn btn-ghost btn-icon" style={{ position: 'relative' }}>
-              <HiOutlineBell style={{ fontSize: '1.25rem' }} />
-              <span style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, background: 'var(--danger)', borderRadius: '50%' }} />
-            </button>
+            <NotificationBell />
             <button className="btn btn-outline btn-sm" onClick={handleLogout}>
               <HiOutlineLogout /> Logout
             </button>

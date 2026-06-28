@@ -4,7 +4,7 @@ const Room = require("../models/Room");
 const MenuItem = require("../models/MenuItem");
 const Hotel = require("../models/Hotel");
 const Booking = require("../models/Booking");
-const { emitNewOrder, emitOrderUpdate, emitItemUpdate } = require("../services/socketService");
+const { emitNewOrder, emitOrderUpdate, emitItemUpdate, notifyUser } = require("../services/socketService");
 
 exports.create = async (req, res, next) => {
   try {
@@ -131,6 +131,18 @@ exports.updateStatus = async (req, res, next) => {
     const order = await Order.findByIdAndUpdate(req.params.id,
       { overallStatus: req.body.status }, { new: true }).populate("table room waiter");
     if (req.app.get("io")) emitOrderUpdate(req.app.get("io"), order);
+
+    if (order?.customer && ["ready", "served"].includes(req.body.status)) {
+      const statusMessage = req.body.status === "ready"
+        ? "Your order is ready"
+        : "Your order has been served";
+      void notifyUser(req.app.get("io"), order.customer, {
+        type: `order:${req.body.status}`,
+        message: statusMessage,
+        payload: { orderId: order._id, status: req.body.status },
+      }).catch(() => {});
+    }
+
     res.json({ order });
   } catch (error) { next(error); }
 };

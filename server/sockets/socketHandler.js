@@ -14,6 +14,11 @@ module.exports = (io) => {
       console.log("Socket auth failed:", err.message);
     }
 
+    // Join a personal room so this user can receive in-app notifications directly.
+    if (user && user.id) {
+      socket.join(`user:${user.id}`);
+    }
+
     // Join kitchen room (chefs and admins)
     socket.on("join:kitchen", () => {
       if (user && ["chef", "admin"].includes(user.role)) {
