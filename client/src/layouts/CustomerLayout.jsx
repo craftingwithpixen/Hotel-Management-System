@@ -70,7 +70,7 @@ export default function CustomerLayout() {
       <aside className={`customer-dashboard-aside ${menuOpen ? 'is-open' : ''}`} style={asideStyle}>
         <div className="flex items-center justify-between gap-sm" style={{ marginBottom: 'var(--space-lg)' }}>
           <NavLink
-            to="/customer"
+            to="/"
             onClick={closeMenu}
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}
           >
@@ -186,9 +186,13 @@ export default function CustomerLayout() {
           >
             <HiOutlineMenu />
           </button>
-          <span className="font-display font-bold" style={brandGold}>
+          <NavLink
+            to="/"
+            className="font-display font-bold"
+            style={{ ...brandGold, textDecoration: 'none' }}
+          >
             Grand Paradise
-          </span>
+          </NavLink>
           {user ? <NotificationBell /> : <span style={{ width: 40 }} />}
         </header>
 
