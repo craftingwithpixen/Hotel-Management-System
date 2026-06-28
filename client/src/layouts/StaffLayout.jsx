@@ -29,7 +29,7 @@ const roleMenus = {
   ],
   manager: [
     { path: '/staff/manager', icon: HiOutlineHome, label: 'Dashboard', end: true },
-    { path: '/staff/manager/hotel', icon: HiOutlineOfficeBuilding, label: 'Hotel Settings' },
+    // { path: '/staff/manager/hotel', icon: HiOutlineOfficeBuilding, label: 'Hotel Settings' },
     { path: '/staff/manager/rooms', icon: HiOutlineOfficeBuilding, label: 'Rooms' },
     { path: '/staff/manager/tables', icon: HiOutlineViewGrid, label: 'Tables' },
     { path: '/staff/manager/inventory', icon: HiOutlineCollection, label: 'Inventory' },
