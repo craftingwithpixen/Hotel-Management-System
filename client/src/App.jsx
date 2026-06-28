@@ -57,6 +57,7 @@ import ScanTable       from './pages/customer/ScanTable';
 import ScanQr          from './pages/customer/ScanQr';
 import DirectOrder     from './pages/customer/DirectOrder';
 import Landing         from './pages/public/Landing';
+import Listings        from './pages/public/Listings';
 
 // ────────────────────────────────────────────────────────────────────
 // Role-based home route helper
@@ -210,6 +211,7 @@ function App() {
 
         {/* ── Public landing ───────────────────────────────────── */}
         <Route path="/" element={<Landing />} />
+        <Route path="/listings" element={<Listings />} />
 
         {/* ── Auth home redirect ──────────────────────────────── */}
         <Route path="/home" element={<AuthHomeRedirect />} />
