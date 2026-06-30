@@ -36,7 +36,7 @@ exports.register = async (req, res, next) => {
       otpExpiry: new Date(Date.now() + 10 * 60 * 1000),
     });
 
-    await emailService.sendOTP(email, otp);
+    emailService.sendOTPInBackground(email, otp);
 
     res.status(201).json({
       message: "Registration successful. Please verify your email.",
@@ -69,6 +69,7 @@ exports.verifyOTP = async (req, res, next) => {
     user.isVerified = true;
     user.otp = undefined;
     user.otpExpiry = undefined;
+    await user.save();
 
     const accessToken = generateAccessToken(user);
 
@@ -95,14 +96,25 @@ exports.resendOTP = async (req, res, next) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    const lastSentAt = user.otpExpiry
+      ? user.otpExpiry.getTime() - 10 * 60 * 1000
+      : 0;
+    const retryAfterMs = 60 * 1000 - (Date.now() - lastSentAt);
+    if (retryAfterMs > 0) {
+      res.set("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
+      return res.status(429).json({
+        message: `Please wait ${Math.ceil(retryAfterMs / 1000)} seconds before requesting another OTP`,
+      });
+    }
+
     const otp = generateOTP();
     user.otp = await bcrypt.hash(otp, 10);
     user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await emailService.sendOTP(email, otp);
+    emailService.sendOTPInBackground(email, otp);
 
-    res.json({ message: "OTP sent successfully" });
+    res.json({ message: "A new OTP is being sent" });
   } catch (error) {
     next(error);
   }
@@ -216,8 +228,8 @@ exports.forgotPassword = async (req, res, next) => {
     user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await emailService.sendOTP(email, otp);
-    res.json({ message: "Password reset OTP sent" });
+    emailService.sendOTPInBackground(email, otp);
+    res.json({ message: "Password reset OTP is being sent" });
   } catch (error) {
     next(error);
   }

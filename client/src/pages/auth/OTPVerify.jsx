@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -9,6 +9,7 @@ import {
   HiOutlineShieldCheck,
 } from 'react-icons/hi';
 import useAuthStore from '../../store/authStore';
+import api from '../../services/api';
 
 const authStyles = `
   .auth-page {
@@ -131,6 +132,14 @@ const authStyles = `
     box-shadow: 0 10px 22px rgba(0,0,0,0.35);
   }
   .auth-submit:disabled { opacity: 0.65; cursor: not-allowed; }
+  .auth-resend {
+    border: 0;
+    background: transparent;
+    color: #dfcf9f;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .auth-resend:disabled { color: #7f8984; cursor: not-allowed; }
   .auth-switch { margin: 1.1rem 0 0; text-align: center; color: #aeb8b2; }
   .auth-switch a { color: #dfcf9f; text-decoration: none; font-weight: 700; }
   .auth-art {
@@ -169,11 +178,22 @@ export default function OTPVerify() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
   const { verifyOTP } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const initialEmail = location.state?.email || '';
   const activeEmail = email || initialEmail;
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return undefined;
+    const timer = window.setTimeout(
+      () => setResendCooldown((value) => value - 1),
+      1000
+    );
+    return () => window.clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleChange = (index, value) => {
     const digit = value.replace(/\D/g, '').slice(-1);
@@ -215,6 +235,22 @@ export default function OTPVerify() {
       toast.error(err.response?.data?.message || 'Invalid OTP');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!activeEmail.trim()) return toast.error('Please enter your email address');
+    setResending(true);
+    try {
+      await api.post('/auth/resend-otp', { email: activeEmail.trim() });
+      setResendCooldown(60);
+      toast.success('A new OTP is being sent');
+    } catch (err) {
+      const retryAfter = Number(err.response?.headers?.['retry-after']);
+      if (retryAfter > 0) setResendCooldown(retryAfter);
+      toast.error(err.response?.data?.message || 'Could not resend OTP');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -281,6 +317,18 @@ export default function OTPVerify() {
 
             <button type="submit" className="auth-submit" disabled={loading}>
               {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} /> : 'Verify Email'}
+            </button>
+            <button
+              type="button"
+              className="auth-resend"
+              onClick={handleResend}
+              disabled={resending || resendCooldown > 0}
+            >
+              {resending
+                ? 'Sending...'
+                : resendCooldown > 0
+                  ? `Resend code in ${resendCooldown}s`
+                  : 'Resend verification code'}
             </button>
           </form>
 

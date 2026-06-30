@@ -12,6 +12,14 @@ const FROM_EMAIL = process.env.EMAIL_FROM || GMAIL_USER;
 if (GMAIL_USER && GMAIL_APP_PASSWORD) {
   transporter = nodemailer.createTransport({
     service: "gmail",
+    // Reuse the authenticated connection for later OTPs. Gmail's initial
+    // DNS/TLS/login handshake is normally the slowest part of delivery.
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 100,
+    connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS) || 10000,
+    greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS) || 5000,
+    socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS) || 15000,
     auth: {
       user: GMAIL_USER,
       pass: GMAIL_APP_PASSWORD,
@@ -37,8 +45,8 @@ const sendEmail = async ({ to, subject, html, attachments }) => {
     });
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
-    return { success: false, error: error.message };
+    console.error("Email send error:", error.message);
+    throw error;
   }
 };
 
@@ -55,6 +63,14 @@ const sendOTP = async (email, otp) => {
         <p style="color: #666; font-size: 14px;">This code expires in 10 minutes.</p>
       </div>
     `,
+  });
+};
+
+// Do not hold an HTTP request open while Gmail negotiates SMTP. This server is
+// long-running, so delivery can safely finish after the response is returned.
+const sendOTPInBackground = (email, otp) => {
+  void sendOTP(email, otp).catch((error) => {
+    console.error(`OTP delivery failed for ${email}:`, error.message);
   });
 };
 
@@ -115,6 +131,7 @@ const sendInvoice = async (email, invoiceUrl) => {
 
 module.exports = {
   sendOTP,
+  sendOTPInBackground,
   sendBookingConfirmation,
   sendLowStockAlert,
   sendInvoice,
